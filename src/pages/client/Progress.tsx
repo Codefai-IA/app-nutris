@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { TrendingDown, TrendingUp, Droplets, Plus, Minus, CalendarDays, CheckCircle2, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -97,47 +97,61 @@ export function Progress() {
     fetchData: fetchAllData,
   });
 
-  async function addWater(amount: number) {
+  // Refs para permitir múltiplos cliques rápidos
+  const pendingWaterRef = useRef<number | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function addWater(amount: number) {
     if (!clientId || !profileReady) return;
 
-    const today = getBrasiliaDate();
-    const newAmount = Math.max(0, todayWater + amount);
-    const previousAmount = todayWater;
+    // Atualização otimista imediata usando functional update
+    setTodayWater(prev => {
+      const newAmount = Math.max(0, prev + amount);
+      pendingWaterRef.current = newAmount;
+      return newAmount;
+    });
 
-    // Atualização otimista imediata
-    setTodayWater(newAmount);
-
-    try {
-      // Tentar atualizar primeiro (mais comum após primeiro clique)
-      const { data: updated, error: updateError } = await supabase
-        .from('daily_progress')
-        .update({ water_consumed_ml: newAmount })
-        .eq('client_id', clientId)
-        .eq('date', today)
-        .select('id')
-        .maybeSingle();
-
-      // Se não atualizou nenhum registro, inserir novo
-      if (!updated && !updateError) {
-        const { error: insertError } = await supabase.from('daily_progress').insert({
-          client_id: clientId,
-          date: today,
-          water_consumed_ml: newAmount,
-          exercises_completed: [],
-          meals_completed: [],
-        });
-
-        if (insertError && insertError.code !== '23505') {
-          // Ignorar erro de duplicado (pode acontecer em cliques rápidos)
-          throw insertError;
-        }
-      }
-
-      if (updateError) throw updateError;
-    } catch (error) {
-      console.error('Erro ao atualizar água:', error);
-      setTodayWater(previousAmount); // Rollback
+    // Debounce database save - aguarda 300ms após última interação
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+
+    const today = getBrasiliaDate();
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      const valueToSave = pendingWaterRef.current;
+      if (valueToSave === null) return;
+
+      try {
+        // Tentar atualizar primeiro (mais comum após primeiro clique)
+        const { data: updated, error: updateError } = await supabase
+          .from('daily_progress')
+          .update({ water_consumed_ml: valueToSave })
+          .eq('client_id', clientId)
+          .eq('date', today)
+          .select('id')
+          .maybeSingle();
+
+        // Se não atualizou nenhum registro, inserir novo
+        if (!updated && !updateError) {
+          const { error: insertError } = await supabase.from('daily_progress').insert({
+            client_id: clientId,
+            date: today,
+            water_consumed_ml: valueToSave,
+            exercises_completed: [],
+            meals_completed: [],
+          });
+
+          if (insertError && insertError.code !== '23505') {
+            throw insertError;
+          }
+        }
+
+        if (updateError) throw updateError;
+      } catch (error) {
+        console.error('Erro ao atualizar água:', error);
+      }
+    }, 300);
   }
 
   // Cálculos de água
