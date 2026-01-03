@@ -122,3 +122,10 @@
   color: var(--text-light);
   flex-shrink: 0;
 }
+
+.bannerImage {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  margin: 24px 0 8px;
+  box-shadow: var(--shadow-md);
+}

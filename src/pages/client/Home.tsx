@@ -97,6 +97,14 @@ export function Home() {
           </p>
         </Card>
 
+        <a href="https://www.instagram.com/michael.nutri/" target="_blank" rel="noopener noreferrer">
+          <img
+            src="/card4.png"
+            alt="Promocional"
+            className={styles.bannerImage}
+          />
+        </a>
+
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Hoje</h2>
 
@@ -144,6 +152,7 @@ export function Home() {
             </Card>
           </Link>
         </section>
+
       </main>
 
       <BottomNav />
