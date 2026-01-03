@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button, Input } from '../../components/ui';
@@ -101,10 +101,6 @@ export function Login() {
             Esqueci minha senha
           </button>
         </form>
-
-        <div className={styles.adminLink}>
-          <Link to="/admin/login">Administrador? Acesse aqui</Link>
-        </div>
       </div>
     </div>
   );
