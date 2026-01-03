@@ -336,7 +336,7 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter basename="/Michael-app">
+    <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
