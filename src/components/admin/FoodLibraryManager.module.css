@@ -318,3 +318,93 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Metadata section styles */
+.metadataSection {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border-light);
+}
+
+.fieldHint {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.select {
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.foodOriginalName {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin: 2px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unitInfo {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 6px;
+}
+
+/* Pagination styles */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0;
+  margin-top: 8px;
+}
+
+.paginationBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  background: var(--bg-main);
+  border-color: var(--accent-primary);
+}
+
+.paginationBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  min-width: 120px;
+  text-align: center;
+}

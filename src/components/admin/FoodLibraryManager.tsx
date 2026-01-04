@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Search, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Input, Card } from '../ui';
+import { UNIT_OPTIONS, UNIT_TYPES } from '../../constants/foodUnits';
+import type { UnitType, FoodMetadata } from '../../types/database';
 import styles from './FoodLibraryManager.module.css';
 
 interface Food {
@@ -13,15 +15,21 @@ interface Food {
   fibra: string;
   gordura?: string;
   created_at?: string;
+  food_metadata?: FoodMetadata | null;
 }
+
+const ITEMS_PER_PAGE = 50;
 
 export function FoodLibraryManager() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingFood, setEditingFood] = useState<Food | null>(null);
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [formData, setFormData] = useState({
     alimento: '',
@@ -29,24 +37,63 @@ export function FoodLibraryManager() {
     proteina: '',
     carboidrato: '',
     fibra: '',
-    gordura: ''
+    gordura: '',
+    // Metadata fields
+    nome_simplificado: '',
+    unidade_tipo: 'gramas' as UnitType,
+    peso_por_unidade: ''
   });
+
+  // Debounce da busca para evitar queries excessivas
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset para primeira página ao buscar
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     loadFoods();
-  }, []);
+  }, [currentPage, debouncedSearch]);
 
   const loadFoods = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+
+    const from = (currentPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    // Monta a query base
+    let query = supabase
       .from('tabela_taco')
-      .select('*')
-      .order('alimento', { ascending: true });
+      .select(`
+        *,
+        food_metadata (
+          id,
+          taco_id,
+          nome_simplificado,
+          unidade_tipo,
+          peso_por_unidade,
+          created_at,
+          updated_at
+        )
+      `, { count: 'exact' });
+
+    // Aplica filtro de busca no servidor se houver termo
+    if (debouncedSearch.trim()) {
+      query = query.ilike('alimento', `%${debouncedSearch.trim()}%`);
+    }
+
+    // Aplica ordenação e paginação
+    const { data, error, count } = await query
+      .order('alimento', { ascending: true })
+      .range(from, to);
 
     if (error) {
       console.error('Error loading foods:', error);
     } else {
       setFoods(data || []);
+      setTotalCount(count || 0);
     }
     setLoading(false);
   };
@@ -71,6 +118,8 @@ export function FoodLibraryManager() {
         gordura: formData.gordura || '0'
       };
 
+      let foodId: number;
+
       if (editingFood) {
         const { error } = await supabase
           .from('tabela_taco')
@@ -83,10 +132,13 @@ export function FoodLibraryManager() {
           setSaving(false);
           return;
         }
+        foodId = editingFood.id;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('tabela_taco')
-          .insert(foodData);
+          .insert(foodData)
+          .select('id')
+          .single();
 
         if (error) {
           console.error('Insert error:', error);
@@ -94,6 +146,49 @@ export function FoodLibraryManager() {
           setSaving(false);
           return;
         }
+        foodId = data.id;
+      }
+
+      // Save metadata if simplified name is provided
+      if (formData.nome_simplificado.trim()) {
+        const metadataData = {
+          taco_id: foodId,
+          nome_simplificado: formData.nome_simplificado.trim(),
+          unidade_tipo: formData.unidade_tipo,
+          peso_por_unidade: formData.peso_por_unidade
+            ? parseFloat(formData.peso_por_unidade.replace(',', '.'))
+            : null
+        };
+
+        // Check if metadata exists
+        const existingMetadata = editingFood?.food_metadata;
+
+        if (existingMetadata) {
+          // Update existing metadata
+          const { error: metaError } = await supabase
+            .from('food_metadata')
+            .update(metadataData)
+            .eq('taco_id', foodId);
+
+          if (metaError) {
+            console.error('Metadata update error:', metaError);
+          }
+        } else {
+          // Insert new metadata
+          const { error: metaError } = await supabase
+            .from('food_metadata')
+            .insert(metadataData);
+
+          if (metaError) {
+            console.error('Metadata insert error:', metaError);
+          }
+        }
+      } else if (editingFood?.food_metadata) {
+        // Remove metadata if simplified name was cleared
+        await supabase
+          .from('food_metadata')
+          .delete()
+          .eq('taco_id', foodId);
       }
 
       resetForm();
@@ -115,7 +210,11 @@ export function FoodLibraryManager() {
       proteina: food.proteina || '',
       carboidrato: food.carboidrato || '',
       fibra: food.fibra || '',
-      gordura: food.gordura || ''
+      gordura: food.gordura || '',
+      // Metadata fields
+      nome_simplificado: food.food_metadata?.nome_simplificado || '',
+      unidade_tipo: food.food_metadata?.unidade_tipo || 'gramas',
+      peso_por_unidade: food.food_metadata?.peso_por_unidade?.toString() || ''
     });
     setShowModal(true);
   };
@@ -147,15 +246,19 @@ export function FoodLibraryManager() {
       proteina: '',
       carboidrato: '',
       fibra: '',
-      gordura: ''
+      gordura: '',
+      nome_simplificado: '',
+      unidade_tipo: 'gramas',
+      peso_por_unidade: ''
     });
     setEditingFood(null);
     setShowModal(false);
   };
 
-  const filteredFoods = foods.filter(food =>
-    food.alimento.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Cálculos de paginação
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const canGoPrev = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
 
   const formatValue = (value: string) => {
     if (!value || value === '0') return '-';
@@ -187,7 +290,7 @@ export function FoodLibraryManager() {
       </div>
 
       <div className={styles.stats}>
-        <p>Total: <strong>{foods.length}</strong> alimentos cadastrados</p>
+        <p>Total: <strong>{totalCount}</strong> alimentos cadastrados</p>
       </div>
 
       <div className={styles.infoBox}>
@@ -196,45 +299,79 @@ export function FoodLibraryManager() {
 
       {loading ? (
         <div className={styles.loading}>Carregando...</div>
-      ) : filteredFoods.length === 0 ? (
+      ) : foods.length === 0 ? (
         <div className={styles.empty}>
           {searchTerm ? 'Nenhum alimento encontrado' : 'Nenhum alimento cadastrado'}
         </div>
       ) : (
         <div className={styles.list}>
-          {filteredFoods.slice(0, 50).map((food) => (
-            <Card key={food.id} className={styles.foodCard}>
-              <div className={styles.foodInfo}>
-                <h4 className={styles.foodName}>{food.alimento}</h4>
-                <div className={styles.foodMacros}>
-                  <span className={styles.macroKcal}>{formatValue(food.caloria)} kcal</span>
-                  <span className={styles.macroP}>P: {formatValue(food.proteina)}g</span>
-                  <span className={styles.macroC}>C: {formatValue(food.carboidrato)}g</span>
-                  <span className={styles.macroG}>G: {formatValue(food.gordura || '0')}g</span>
-                  <span className={styles.macroF}>F: {formatValue(food.fibra)}g</span>
-                </div>
-              </div>
-              <div className={styles.foodActions}>
-                <button
-                  onClick={() => handleEdit(food)}
-                  className={styles.editBtn}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => handleDelete(food)}
-                  className={styles.deleteBtn}
-                >
-                  Excluir
-                </button>
-              </div>
-            </Card>
-          ))}
+          {foods.map((food) => {
+            const hasMetadata = !!food.food_metadata?.nome_simplificado;
+            const hasUnit = food.food_metadata?.unidade_tipo && food.food_metadata.unidade_tipo !== 'gramas';
 
-          {filteredFoods.length > 50 && (
-            <p className={styles.moreResults}>
-              Mostrando 50 de {filteredFoods.length} resultados. Use a busca para filtrar.
-            </p>
+            return (
+              <Card key={food.id} className={styles.foodCard}>
+                <div className={styles.foodInfo}>
+                  <h4 className={styles.foodName}>
+                    {food.food_metadata?.nome_simplificado || food.alimento}
+                  </h4>
+                  {hasMetadata && (
+                    <p className={styles.foodOriginalName}>{food.alimento}</p>
+                  )}
+                  <div className={styles.foodMacros}>
+                    <span className={styles.macroKcal}>{formatValue(food.caloria)} kcal</span>
+                    <span className={styles.macroP}>P: {formatValue(food.proteina)}g</span>
+                    <span className={styles.macroC}>C: {formatValue(food.carboidrato)}g</span>
+                    <span className={styles.macroG}>G: {formatValue(food.gordura || '0')}g</span>
+                    <span className={styles.macroF}>F: {formatValue(food.fibra)}g</span>
+                  </div>
+                  {hasUnit && food.food_metadata && (
+                    <div className={styles.unitInfo}>
+                      {food.food_metadata.peso_por_unidade}g / {UNIT_TYPES[food.food_metadata.unidade_tipo].singular}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.foodActions}>
+                  <button
+                    onClick={() => handleEdit(food)}
+                    className={styles.editBtn}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(food)}
+                    className={styles.deleteBtn}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+
+          {/* Controles de Paginação */}
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button
+                onClick={() => setCurrentPage(p => p - 1)}
+                disabled={!canGoPrev}
+                className={styles.paginationBtn}
+              >
+                <ChevronLeft size={18} />
+                Anterior
+              </button>
+              <span className={styles.paginationInfo}>
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => p + 1)}
+                disabled={!canGoNext}
+                className={styles.paginationBtn}
+              >
+                Próxima
+                <ChevronRight size={18} />
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -312,6 +449,51 @@ export function FoodLibraryManager() {
                     onChange={(e) => setFormData({ ...formData, fibra: e.target.value })}
                     placeholder="Ex: 2,7"
                   />
+                </div>
+              </div>
+
+              <div className={styles.metadataSection}>
+                <p className={styles.formNote}>Nome simplificado e unidades (opcional):</p>
+
+                <div className={styles.formGroup}>
+                  <label>Nome Simplificado</label>
+                  <input
+                    type="text"
+                    value={formData.nome_simplificado}
+                    onChange={(e) => setFormData({ ...formData, nome_simplificado: e.target.value })}
+                    placeholder="Ex: Peito de Frango"
+                  />
+                  <span className={styles.fieldHint}>Nome curto para facilitar a busca</span>
+                </div>
+
+                <div className={styles.formGrid}>
+                  <div className={styles.formGroup}>
+                    <label>Tipo de Unidade</label>
+                    <select
+                      value={formData.unidade_tipo}
+                      onChange={(e) => setFormData({ ...formData, unidade_tipo: e.target.value as UnitType })}
+                      className={styles.select}
+                    >
+                      {UNIT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.unidade_tipo !== 'gramas' && (
+                    <div className={styles.formGroup}>
+                      <label>Peso por Unidade (g)</label>
+                      <input
+                        type="text"
+                        value={formData.peso_por_unidade}
+                        onChange={(e) => setFormData({ ...formData, peso_por_unidade: e.target.value })}
+                        placeholder="Ex: 30"
+                      />
+                      <span className={styles.fieldHint}>Quantas gramas tem 1 {UNIT_TYPES[formData.unidade_tipo].singular}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

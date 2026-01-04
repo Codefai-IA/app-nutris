@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { Search, X, Check } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import type { TabelaTaco } from '../../types/database';
+import type { TabelaTacoWithMetadata } from '../../types/database';
+import { getDisplayName, hasUnitSupport } from '../../utils/foodUnits';
+import { UNIT_TYPES } from '../../constants/foodUnits';
 import styles from './FoodSelect.module.css';
 
 // Helper para converter números no formato brasileiro (vírgula como decimal)
@@ -29,7 +31,7 @@ function normalizeText(text: string): string {
 interface FoodSelectProps {
   value: string;
   onChange: (foodName: string) => void;
-  onFoodSelect?: (food: TabelaTaco) => void;
+  onFoodSelect?: (food: TabelaTacoWithMetadata) => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -43,9 +45,9 @@ export function FoodSelect({
 }: FoodSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value);
-  const [foods, setFoods] = useState<TabelaTaco[]>([]);
+  const [foods, setFoods] = useState<TabelaTacoWithMetadata[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedFood, setSelectedFood] = useState<TabelaTaco | null>(null);
+  const [selectedFood, setSelectedFood] = useState<TabelaTacoWithMetadata | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,47 +80,68 @@ export function FoodSelect({
 
       setLoading(true);
 
-      // Normaliza o termo de busca
-      const normalizedSearchTerm = normalizeText(searchTerm);
-      const searchWords = normalizedSearchTerm.split(/\s+/).filter(w => w.length > 0);
+      const searchTermClean = searchTerm.trim();
 
-      // Busca mais resultados para filtrar localmente (fuzzy search)
+      // OTIMIZADO: Filtra diretamente no servidor com ilike, limitando a 30 resultados
       const { data, error } = await supabase
         .from('tabela_taco')
-        .select('*')
+        .select(`
+          *,
+          food_metadata (
+            id,
+            taco_id,
+            nome_simplificado,
+            unidade_tipo,
+            peso_por_unidade,
+            created_at,
+            updated_at
+          )
+        `)
+        .ilike('alimento', `%${searchTermClean}%`)
         .order('alimento', { ascending: true })
-        .limit(500);
+        .limit(30);
+
+      setLoading(false);
 
       if (error) {
         console.error('Erro ao buscar alimentos:', error);
         setFoods([]);
-      } else if (data) {
-        // Filtra localmente com busca flexível
-        const filteredFoods = data.filter(food => {
-          const normalizedFoodName = normalizeText(food.alimento);
-
-          // Verifica se TODAS as palavras da busca estão no nome do alimento
-          return searchWords.every(word => normalizedFoodName.includes(word));
-        });
-
-        // Ordena por relevância (alimentos que começam com a busca primeiro)
-        filteredFoods.sort((a, b) => {
-          const aName = normalizeText(a.alimento);
-          const bName = normalizeText(b.alimento);
-          const firstWord = searchWords[0] || '';
-
-          const aStartsWith = aName.startsWith(firstWord);
-          const bStartsWith = bName.startsWith(firstWord);
-
-          if (aStartsWith && !bStartsWith) return -1;
-          if (!aStartsWith && bStartsWith) return 1;
-          return aName.localeCompare(bName);
-        });
-
-        setFoods(filteredFoods.slice(0, 30)); // Limita a 30 resultados
-        setHighlightedIndex(0);
+        return;
       }
-      setLoading(false);
+
+      if (!data || data.length === 0) {
+        setFoods([]);
+        return;
+      }
+
+      // Ordena por relevância localmente (operação leve com apenas 30 itens)
+      const normalizedSearch = normalizeText(searchTermClean);
+      const firstWord = normalizedSearch.split(/\s+/)[0] || '';
+
+      data.sort((a, b) => {
+        const aSimplified = a.food_metadata?.nome_simplificado
+          ? normalizeText(a.food_metadata.nome_simplificado)
+          : '';
+        const bSimplified = b.food_metadata?.nome_simplificado
+          ? normalizeText(b.food_metadata.nome_simplificado)
+          : '';
+        const aOriginal = normalizeText(a.alimento);
+        const bOriginal = normalizeText(b.alimento);
+
+        // Prioriza nome que comeca com a busca
+        const aStarts = aSimplified.startsWith(firstWord) || aOriginal.startsWith(firstWord);
+        const bStarts = bSimplified.startsWith(firstWord) || bOriginal.startsWith(firstWord);
+        if (aStarts && !bStarts) return -1;
+        if (!aStarts && bStarts) return 1;
+
+        // Ordena alfabeticamente
+        const aDisplay = aSimplified || aOriginal;
+        const bDisplay = bSimplified || bOriginal;
+        return aDisplay.localeCompare(bDisplay);
+      });
+
+      setFoods(data);
+      setHighlightedIndex(0);
     };
 
     const debounceTimer = setTimeout(searchFoods, 300);
@@ -142,10 +165,11 @@ export function FoodSelect({
     setIsOpen(true);
   };
 
-  const handleFoodSelect = (food: TabelaTaco) => {
+  const handleFoodSelect = (food: TabelaTacoWithMetadata) => {
     setSelectedFood(food);
-    setSearchTerm(food.alimento);
-    onChange(food.alimento);
+    const displayName = getDisplayName(food);
+    setSearchTerm(displayName);
+    onChange(food.alimento); // Always use original name for database
     onFoodSelect?.(food);
     setIsOpen(false);
   };
@@ -262,21 +286,43 @@ export function FoodSelect({
 
           {!loading && foods.length > 0 && (
             <ul className={styles.foodList} ref={listRef}>
-              {foods.map((food, index) => (
-                <li
-                  key={food.id}
-                  className={`${styles.foodItem} ${index === highlightedIndex ? styles.highlighted : ''}`}
-                  onClick={() => handleFoodSelect(food)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                >
-                  <span className={styles.foodName}>
-                    {highlightMatch(food.alimento, searchTerm)}
-                  </span>
-                  <span className={styles.foodCalories}>
-                    {formatCalories(food.caloria)}
-                  </span>
-                </li>
-              ))}
+              {foods.map((food, index) => {
+                const displayName = getDisplayName(food);
+                const showOriginal = food.food_metadata?.nome_simplificado &&
+                  food.food_metadata.nome_simplificado !== food.alimento;
+                const unitType = food.food_metadata?.unidade_tipo;
+                const unitInfo = hasUnitSupport(food) && unitType && UNIT_TYPES[unitType]
+                  ? `${food.food_metadata!.peso_por_unidade}g/${UNIT_TYPES[unitType].singular}`
+                  : null;
+
+                return (
+                  <li
+                    key={food.id}
+                    className={`${styles.foodItem} ${index === highlightedIndex ? styles.highlighted : ''}`}
+                    onClick={() => handleFoodSelect(food)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                  >
+                    <div className={styles.foodNameWrapper}>
+                      <span className={styles.foodName}>
+                        {highlightMatch(displayName, searchTerm)}
+                      </span>
+                      {showOriginal && (
+                        <span className={styles.foodOriginal}>
+                          {food.alimento}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.foodMeta}>
+                      {unitInfo && (
+                        <span className={styles.foodUnit}>{unitInfo}</span>
+                      )}
+                      <span className={styles.foodCalories}>
+                        {formatCalories(food.caloria)}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

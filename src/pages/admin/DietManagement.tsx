@@ -122,9 +122,6 @@ export function DietManagement() {
   }
 
   async function fetchDiet() {
-    console.log('=== FETCHING DIET START ===');
-    console.log('User ID:', id);
-
     try {
       let { data: plan, error: fetchError } = await supabase
         .from('diet_plans')
@@ -132,76 +129,79 @@ export function DietManagement() {
         .eq('client_id', id)
         .maybeSingle();
 
-      console.log('Fetch result:', plan);
-      if (fetchError) console.log('Fetch error:', fetchError);
+      if (fetchError) console.error('Fetch error:', fetchError);
 
       if (!plan) {
-        console.log('No plan found, creating new one...');
         const { data: newPlan, error: insertError } = await supabase
           .from('diet_plans')
           .insert({ client_id: id })
           .select()
           .single();
 
-        console.log('Insert result:', newPlan);
-        if (insertError) console.log('Insert error:', insertError);
+        if (insertError) console.error('Insert error:', insertError);
         plan = newPlan;
       }
 
       if (plan) {
         setDietPlan(plan);
-        console.log('Diet plan set, fetching meals...');
 
+        // OTIMIZADO: Busca refeições com alimentos em uma única query usando JOIN
         const { data: mealsData } = await supabase
           .from('meals')
-          .select('*')
+          .select(`
+            *,
+            meal_foods (*)
+          `)
           .eq('diet_plan_id', plan.id)
           .order('order_index');
 
-        console.log('Meals found:', mealsData?.length || 0);
-
         if (mealsData && mealsData.length > 0) {
-          const mealsWithFoods: MealWithFoods[] = [];
+          // Coleta todos os nomes de alimentos únicos para buscar nutrição em batch
+          const allFoodNames = new Set<string>();
+          mealsData.forEach(meal => {
+            (meal.meal_foods || []).forEach((food: { food_name?: string }) => {
+              if (food.food_name) {
+                allFoodNames.add(food.food_name);
+              }
+            });
+          });
 
-          for (const meal of mealsData) {
-            console.log(`Fetching foods for meal: ${meal.name}`);
-            const { data: foods } = await supabase
-              .from('meal_foods')
+          // OTIMIZADO: Busca todos os dados nutricionais em uma única query
+          let nutritionMap = new Map<string, TabelaTaco>();
+          if (allFoodNames.size > 0) {
+            const { data: tacoFoods } = await supabase
+              .from('tabela_taco')
               .select('*')
-              .eq('meal_id', meal.id)
-              .order('order_index');
+              .in('alimento', Array.from(allFoodNames));
 
-            console.log(`  Foods found: ${foods?.length || 0}`);
+            if (tacoFoods) {
+              tacoFoods.forEach(food => {
+                nutritionMap.set(food.alimento, food);
+              });
+            }
+          }
 
-            const foodsWithNutrition: MealFoodWithNutrition[] = [];
+          // Processa os dados usando o mapa de nutrição
+          const mealsWithFoods: MealWithFoods[] = mealsData.map(meal => {
+            const mealFoods = (meal.meal_foods || [])
+              .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index);
 
-            for (const food of foods || []) {
-              console.log(`  Processing food: ${food.food_name}`);
-
-              // Pular se não tiver nome
+            const foodsWithNutrition: MealFoodWithNutrition[] = mealFoods.map((food: MealFoodWithNutrition) => {
               if (!food.food_name) {
-                foodsWithNutrition.push(food);
-                continue;
+                return food;
               }
 
-              // Buscar dados nutricionais
-              const { data: tacoFood } = await supabase
-                .from('tabela_taco')
-                .select('*')
-                .eq('alimento', food.food_name)
-                .maybeSingle();
-
+              const tacoFood = nutritionMap.get(food.food_name);
               if (tacoFood) {
                 const qty = parseBrazilianNumber(food.quantity);
                 const multiplier = qty / 100;
 
-                // Usa parseBrazilianNumber para converter valores com vírgula
                 const caloriesPer100g = parseBrazilianNumber(tacoFood.caloria);
                 const proteinPer100g = parseBrazilianNumber(tacoFood.proteina);
                 const carbsPer100g = parseBrazilianNumber(tacoFood.carboidrato);
                 const fatsPer100g = parseBrazilianNumber(tacoFood.gordura);
 
-                foodsWithNutrition.push({
+                return {
                   ...food,
                   calories_per_100g: caloriesPer100g,
                   protein_per_100g: proteinPer100g,
@@ -211,25 +211,21 @@ export function DietManagement() {
                   protein: proteinPer100g * multiplier,
                   carbs: carbsPer100g * multiplier,
                   fats: fatsPer100g * multiplier,
-                });
-              } else {
-                foodsWithNutrition.push(food);
+                };
               }
-            }
+              return food;
+            });
 
-            mealsWithFoods.push({ ...meal, foods: foodsWithNutrition });
-          }
+            return { ...meal, foods: foodsWithNutrition };
+          });
 
-          console.log('Setting meals with foods:', mealsWithFoods.length);
           setMeals(mealsWithFoods);
         } else {
           setMeals([]);
         }
       }
-
-      console.log('=== FETCHING DIET COMPLETE ===');
     } catch (error) {
-      console.error('=== FETCH DIET ERROR ===', error);
+      console.error('Fetch diet error:', error);
     } finally {
       setLoading(false);
     }
@@ -276,25 +272,6 @@ export function DietManagement() {
   }
 
   async function handleSave() {
-    console.log('=== 1. SAVE DIET STARTED ===');
-
-    // Debug: Log todos os dados antes de salvar
-    console.log('dietPlan:', dietPlan);
-    console.log('meals count:', meals.length);
-    meals.forEach((meal, mealIndex) => {
-      console.log(`Meal ${mealIndex}:`, meal.name, `(id: ${meal.id})`);
-      meal.foods.forEach((food, foodIndex) => {
-        console.log(`  Food ${foodIndex}:`, {
-          id: food.id,
-          name: food.food_name,
-          quantity: food.quantity,
-          quantityType: typeof food.quantity,
-          isNaN: isNaN(parseFloat(food.quantity)),
-          order_index: food.order_index,
-        });
-      });
-    });
-
     if (!dietPlan) {
       console.error('dietPlan is null - cannot save');
       alert('Erro: Plano de dieta não carregado. Recarregue a página.');
@@ -306,7 +283,6 @@ export function DietManagement() {
 
     try {
       const now = new Date().toISOString();
-      console.log('=== 2. SAVING DIET PLAN ===');
 
       // Salvar totais calculados no plano
       const planUpdateData = {
@@ -318,28 +294,22 @@ export function DietManagement() {
         notes: dietPlan.notes || null,
         updated_at: now,
       };
-      console.log('Plan update data:', planUpdateData);
 
       const { error: planError } = await supabase
         .from('diet_plans')
         .update(planUpdateData)
         .eq('id', dietPlan.id);
 
-      console.log('=== 3. DIET PLAN UPDATE RESULT:', planError ? 'ERROR' : 'SUCCESS');
       if (planError) {
         console.error('Plan error:', planError);
         throw planError;
       }
 
-      console.log('=== 4. PROCESSING MEALS ===');
       for (let mealIdx = 0; mealIdx < meals.length; mealIdx++) {
         const meal = meals[mealIdx];
-        console.log(`Processing meal ${mealIdx}: ${meal.name} (id: ${meal.id})`);
-
         let currentMealId = meal.id;
 
         if (meal.id.startsWith('new-')) {
-          console.log(`  Creating new meal...`);
           const { data: newMeal, error: mealError } = await supabase
             .from('meals')
             .insert({
@@ -352,13 +322,11 @@ export function DietManagement() {
             .single();
 
           if (mealError) {
-            console.error(`  Meal insert error:`, mealError);
+            console.error('Meal insert error:', mealError);
             throw mealError;
           }
-          console.log(`  New meal created with id: ${newMeal?.id}`);
           currentMealId = newMeal?.id || meal.id;
         } else {
-          console.log(`  Updating existing meal...`);
           const { error: mealUpdateError } = await supabase
             .from('meals')
             .update({
@@ -369,59 +337,47 @@ export function DietManagement() {
             .eq('id', meal.id);
 
           if (mealUpdateError) {
-            console.error(`  Meal update error:`, mealUpdateError);
+            console.error('Meal update error:', mealUpdateError);
             throw mealUpdateError;
           }
-          console.log(`  Meal updated successfully`);
         }
 
         // Processar alimentos da refeição
-        console.log(`  Processing ${meal.foods.length} foods...`);
         for (let foodIdx = 0; foodIdx < meal.foods.length; foodIdx++) {
           const food = meal.foods[foodIdx];
           const sanitizedFood = sanitizeFoodForSave(food);
-          console.log(`    Food ${foodIdx}: ${food.food_name} (id: ${food.id})`);
-          console.log(`    Sanitized:`, sanitizedFood);
 
           if (food.id.startsWith('new-')) {
-            console.log(`    Inserting new food...`);
             const { error: foodInsertError } = await supabase.from('meal_foods').insert({
               meal_id: currentMealId,
               ...sanitizedFood,
             });
             if (foodInsertError) {
-              console.error(`    Food insert error:`, foodInsertError);
+              console.error('Food insert error:', foodInsertError);
               throw foodInsertError;
             }
-            console.log(`    Food inserted successfully`);
           } else {
-            console.log(`    Updating existing food...`);
             const { error: foodUpdateError } = await supabase
               .from('meal_foods')
               .update(sanitizedFood)
               .eq('id', food.id);
             if (foodUpdateError) {
-              console.error(`    Food update error:`, foodUpdateError);
+              console.error('Food update error:', foodUpdateError);
               throw foodUpdateError;
             }
-            console.log(`    Food updated successfully`);
           }
         }
       }
 
-      console.log('=== 5. FETCHING UPDATED DATA ===');
       await fetchDiet();
-
-      console.log('=== 6. SAVE COMPLETE ===');
       setLastSavedAt(now);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 5000);
     } catch (error) {
-      console.error('=== SAVE ERROR ===', error);
+      console.error('Save error:', error);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } finally {
-      console.log('=== 7. FINALLY BLOCK ===');
       setSaving(false);
     }
   }
