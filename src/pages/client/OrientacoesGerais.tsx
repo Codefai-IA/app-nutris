@@ -64,7 +64,7 @@ export function OrientacoesGerais() {
   if (loading) {
     return (
       <PageContainer>
-        <Header title="Orientacoes Gerais" subtitle="Recomendacoes do seu nutricionista" showBack />
+        <Header title="Orientações Gerais" subtitle="Recomendações do seu nutricionista" showBack />
         <main className={styles.content}>
           <div className={styles.skeleton} />
           <div className={styles.skeleton} />
@@ -85,7 +85,7 @@ export function OrientacoesGerais() {
 
   return (
     <PageContainer>
-      <Header title="Orientacoes Gerais" subtitle="Recomendacoes do seu nutricionista" showBack />
+      <Header title="Orientações Gerais" subtitle="Recomendações do seu nutricionista" showBack />
 
       <main className={styles.content}>
         {!hasContent ? (
@@ -93,9 +93,9 @@ export function OrientacoesGerais() {
             <div className={styles.emptyIcon}>
               <FileText size={48} />
             </div>
-            <p className={styles.emptyTitle}>Nenhuma orientacao cadastrada</p>
+            <p className={styles.emptyTitle}>Nenhuma orientação cadastrada</p>
             <p className={styles.emptySubtitle}>
-              Aguarde seu nutricionista adicionar as recomendacoes
+              Aguarde seu nutricionista adicionar as recomendações
             </p>
           </div>
         ) : (
@@ -142,16 +142,16 @@ export function OrientacoesGerais() {
                   <div className={`${styles.cardIcon} ${styles.freeMeal}`}>
                     <Utensils size={24} />
                   </div>
-                  <h2 className={styles.cardTitle}>Refeicao Livre</h2>
+                  <h2 className={styles.cardTitle}>Refeição Livre</h2>
                 </div>
                 <p className={styles.videoDescription}>
-                  Assista o video para entender como funciona sua refeicao livre
+                  Assista o vídeo para entender como funciona sua refeição livre
                 </p>
                 <div className={styles.videoWrapper}>
                   <iframe
                     className={styles.videoFrame}
                     src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
-                    title="Video Refeicao Livre"
+                    title="Vídeo Refeição Livre"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -167,7 +167,7 @@ export function OrientacoesGerais() {
                   <div className={`${styles.cardIcon} ${styles.notes}`}>
                     <FileText size={24} />
                   </div>
-                  <h2 className={styles.cardTitle}>Observacoes</h2>
+                  <h2 className={styles.cardTitle}>Observações</h2>
                 </div>
                 <div className={`${styles.cardContent} ${styles.notesBg}`}>
                   <p className={styles.cardText}>

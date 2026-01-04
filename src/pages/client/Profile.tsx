@@ -226,7 +226,7 @@ export function Profile() {
     <PageContainer>
       <header className={styles.header}>
         <img
-          src="/logo.jpeg"
+          src="/logo-icon.png"
           alt="Logo"
           className={styles.logo}
         />

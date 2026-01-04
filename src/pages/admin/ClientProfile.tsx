@@ -314,7 +314,7 @@ export function ClientProfile() {
                 <FileText size={22} />
               </div>
               <div className={styles.menuContent}>
-                <span className={styles.menuText}>Orientacoes Gerais</span>
+                <span className={styles.menuText}>Orientações Gerais</span>
                 <span className={styles.menuStatus}>
                   Suplementos, manipulados e mais
                 </span>
