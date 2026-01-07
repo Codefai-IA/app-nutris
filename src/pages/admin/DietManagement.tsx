@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Save, Plus, Trash2, Clock, Check, AlertCircle } from 'lucide-react';
+import { Save, Plus, Trash2, Clock, Check, AlertCircle, FileText, RefreshCw, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageContainer, Header } from '../../components/layout';
 import { Card, Input, Button, FoodSelect, Select } from '../../components/ui';
@@ -14,9 +14,18 @@ const MEAL_OPTIONS = [
   { value: 'Jantar', label: 'Jantar' },
   { value: 'Ceia', label: 'Ceia' },
   { value: 'Pré-Treino', label: 'Pré-Treino' },
+  { value: 'Pós-Treino', label: 'Pós-Treino' },
 ];
 
-import type { Profile, DietPlan, Meal, TabelaTaco } from '../../types/database';
+const UNIT_OPTIONS: { value: UnitType; label: string }[] = [
+  { value: 'gramas', label: 'Gramas (g)' },
+  { value: 'unidade', label: 'Unidade' },
+  { value: 'fatia', label: 'Fatia' },
+];
+
+import type { Profile, DietPlan, Meal, TabelaTaco, FoodSubstitution, UnitType, TabelaTacoWithMetadata } from '../../types/database';
+import { UNIT_TYPES } from '../../constants/foodUnits';
+import { calculateGramsFromUnits, formatQuantityDisplay, getUnitLabel } from '../../utils/foodUnits';
 import styles from './DietManagement.module.css';
 
 interface MealFoodWithNutrition {
@@ -25,6 +34,10 @@ interface MealFoodWithNutrition {
   food_name: string;
   quantity: string;
   order_index: number;
+  // Unit support
+  unit_type: UnitType;
+  quantity_units: number | null;
+  peso_por_unidade: number | null; // grams per unit (from food_metadata)
   // Valores calculados baseados na quantidade
   calories?: number;
   protein?: number;
@@ -57,6 +70,16 @@ interface MacroGoals {
 }
 
 type MacroStatus = 'good' | 'close' | 'low' | 'high' | 'neutral';
+
+// Interface para substituições locais (incluindo novas ainda não salvas)
+interface LocalSubstitution {
+  id: string;
+  original_food: string;
+  substitute_food: string;
+  substitute_quantity: string;
+  isNew?: boolean;
+  isDeleted?: boolean;
+}
 
 function getMacroStatus(current: number, goal: number | null): { status: MacroStatus; diff: number; percentage: number } {
   if (!goal) return { status: 'neutral', diff: 0, percentage: 0 };
@@ -99,6 +122,16 @@ export function DietManagement() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<{ id: string; name: string; description: string | null }[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
+  // Substitutions state
+  const [substitutions, setSubstitutions] = useState<LocalSubstitution[]>([]);
+  const [showSubstitutionModal, setShowSubstitutionModal] = useState(false);
+  const [editingFoodName, setEditingFoodName] = useState<string | null>(null);
+  const [newSubstituteFood, setNewSubstituteFood] = useState('');
+  const [newSubstituteQty, setNewSubstituteQty] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -155,6 +188,23 @@ export function DietManagement() {
           .eq('diet_plan_id', plan.id)
           .order('order_index');
 
+        // Buscar substituições existentes
+        const { data: substitutionsData } = await supabase
+          .from('food_substitutions')
+          .select('*')
+          .eq('diet_plan_id', plan.id);
+
+        if (substitutionsData) {
+          setSubstitutions(substitutionsData.map(sub => ({
+            id: sub.id,
+            original_food: sub.original_food,
+            substitute_food: sub.substitute_food,
+            substitute_quantity: sub.substitute_quantity,
+          })));
+        } else {
+          setSubstitutions([]);
+        }
+
         if (mealsData && mealsData.length > 0) {
           // Coleta todos os nomes de alimentos únicos para buscar nutrição em batch
           const allFoodNames = new Set<string>();
@@ -166,17 +216,17 @@ export function DietManagement() {
             });
           });
 
-          // OTIMIZADO: Busca todos os dados nutricionais em uma única query
-          let nutritionMap = new Map<string, TabelaTaco>();
+          // OTIMIZADO: Busca todos os dados nutricionais em uma única query (com metadata)
+          let nutritionMap = new Map<string, TabelaTacoWithMetadata>();
           if (allFoodNames.size > 0) {
             const { data: tacoFoods } = await supabase
               .from('tabela_taco')
-              .select('*')
+              .select('*, food_metadata(*)')
               .in('alimento', Array.from(allFoodNames));
 
             if (tacoFoods) {
               tacoFoods.forEach(food => {
-                nutritionMap.set(food.alimento, food);
+                nutritionMap.set(food.alimento, food as TabelaTacoWithMetadata);
               });
             }
           }
@@ -186,9 +236,18 @@ export function DietManagement() {
             const mealFoods = (meal.meal_foods || [])
               .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index);
 
-            const foodsWithNutrition: MealFoodWithNutrition[] = mealFoods.map((food: MealFoodWithNutrition) => {
+            const foodsWithNutrition: MealFoodWithNutrition[] = mealFoods.map((food: any) => {
+              // Initialize unit fields with defaults if not present
+              const unitType: UnitType = food.unit_type || 'gramas';
+              const quantityUnits: number | null = food.quantity_units ?? null;
+
               if (!food.food_name) {
-                return food;
+                return {
+                  ...food,
+                  unit_type: unitType,
+                  quantity_units: quantityUnits,
+                  peso_por_unidade: null,
+                };
               }
 
               const tacoFood = nutritionMap.get(food.food_name);
@@ -201,8 +260,14 @@ export function DietManagement() {
                 const carbsPer100g = parseBrazilianNumber(tacoFood.carboidrato);
                 const fatsPer100g = parseBrazilianNumber(tacoFood.gordura);
 
+                // Get peso_por_unidade from food_metadata if available
+                const pesoPorUnidade = tacoFood.food_metadata?.peso_por_unidade ?? null;
+
                 return {
                   ...food,
+                  unit_type: unitType,
+                  quantity_units: quantityUnits,
+                  peso_por_unidade: pesoPorUnidade,
                   calories_per_100g: caloriesPer100g,
                   protein_per_100g: proteinPer100g,
                   carbs_per_100g: carbsPer100g,
@@ -213,7 +278,12 @@ export function DietManagement() {
                   fats: fatsPer100g * multiplier,
                 };
               }
-              return food;
+              return {
+                ...food,
+                unit_type: unitType,
+                quantity_units: quantityUnits,
+                peso_por_unidade: null,
+              };
             });
 
             return { ...meal, foods: foodsWithNutrition };
@@ -268,6 +338,8 @@ export function DietManagement() {
       food_name: food.food_name || '',
       quantity: quantityStr,
       order_index: Number(food.order_index) || 0,
+      unit_type: food.unit_type || 'gramas',
+      quantity_units: food.quantity_units,
     };
   }
 
@@ -369,6 +441,35 @@ export function DietManagement() {
         }
       }
 
+      // Salvar substituições
+      // 1. Deletar substituições marcadas para exclusão
+      const toDelete = substitutions.filter((sub) => sub.isDeleted && !sub.isNew);
+      for (const sub of toDelete) {
+        const { error: deleteError } = await supabase
+          .from('food_substitutions')
+          .delete()
+          .eq('id', sub.id);
+        if (deleteError) {
+          console.error('Substitution delete error:', deleteError);
+          throw deleteError;
+        }
+      }
+
+      // 2. Inserir novas substituições
+      const toInsert = substitutions.filter((sub) => sub.isNew && !sub.isDeleted);
+      for (const sub of toInsert) {
+        const { error: insertError } = await supabase.from('food_substitutions').insert({
+          diet_plan_id: dietPlan.id,
+          original_food: sub.original_food,
+          substitute_food: sub.substitute_food,
+          substitute_quantity: sub.substitute_quantity,
+        });
+        if (insertError) {
+          console.error('Substitution insert error:', insertError);
+          throw insertError;
+        }
+      }
+
       await fetchDiet();
       setLastSavedAt(now);
       setSaveStatus('success');
@@ -380,6 +481,123 @@ export function DietManagement() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function loadTemplates() {
+    setLoadingTemplates(true);
+    const { data } = await supabase
+      .from('diet_templates')
+      .select('id, name, description')
+      .order('name');
+    setTemplates(data || []);
+    setLoadingTemplates(false);
+    setShowTemplateModal(true);
+  }
+
+  async function applyTemplate(templateId: string) {
+    if (!dietPlan) return;
+
+    const { data: mealsData } = await supabase
+      .from('diet_template_meals')
+      .select(`
+        *,
+        diet_template_meal_foods (*)
+      `)
+      .eq('template_id', templateId)
+      .order('order_index');
+
+    if (!mealsData) return;
+
+    // Deletar meals existentes para este plano (cascade deleta foods)
+    const existingIds = meals
+      .filter(m => !m.id.startsWith('new-'))
+      .map(m => m.id);
+
+    if (existingIds.length > 0) {
+      await supabase
+        .from('meals')
+        .delete()
+        .in('id', existingIds);
+    }
+
+    // Coleta nomes de alimentos para buscar nutrição
+    const allFoodNames = new Set<string>();
+    mealsData.forEach(meal => {
+      (meal.diet_template_meal_foods || []).forEach((food: { food_name?: string }) => {
+        if (food.food_name) allFoodNames.add(food.food_name);
+      });
+    });
+
+    // Busca dados nutricionais
+    let nutritionMap = new Map<string, TabelaTaco>();
+    if (allFoodNames.size > 0) {
+      const { data: tacoFoods } = await supabase
+        .from('tabela_taco')
+        .select('*')
+        .in('alimento', Array.from(allFoodNames));
+      if (tacoFoods) {
+        tacoFoods.forEach(food => nutritionMap.set(food.alimento, food));
+      }
+    }
+
+    const newMeals: MealWithFoods[] = mealsData.map((meal, mealIdx) => {
+      const foods = (meal.diet_template_meal_foods || [])
+        .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
+        .map((food: { food_name: string; quantity: string; order_index: number }, foodIdx: number) => {
+          const tacoFood = nutritionMap.get(food.food_name);
+          const qty = parseBrazilianNumber(food.quantity);
+          const multiplier = qty / 100;
+
+          if (tacoFood) {
+            const caloriesPer100g = parseBrazilianNumber(tacoFood.caloria);
+            const proteinPer100g = parseBrazilianNumber(tacoFood.proteina);
+            const carbsPer100g = parseBrazilianNumber(tacoFood.carboidrato);
+            const fatsPer100g = parseBrazilianNumber(tacoFood.gordura);
+
+            return {
+              id: `new-${Date.now()}-${mealIdx}-${foodIdx}`,
+              meal_id: '',
+              food_name: food.food_name,
+              quantity: food.quantity,
+              order_index: food.order_index,
+              unit_type: 'gramas' as UnitType,
+              quantity_units: null,
+              peso_por_unidade: null,
+              calories_per_100g: caloriesPer100g,
+              protein_per_100g: proteinPer100g,
+              carbs_per_100g: carbsPer100g,
+              fats_per_100g: fatsPer100g,
+              calories: caloriesPer100g * multiplier,
+              protein: proteinPer100g * multiplier,
+              carbs: carbsPer100g * multiplier,
+              fats: fatsPer100g * multiplier,
+            };
+          }
+
+          return {
+            id: `new-${Date.now()}-${mealIdx}-${foodIdx}`,
+            meal_id: '',
+            food_name: food.food_name,
+            quantity: food.quantity,
+            order_index: food.order_index,
+            unit_type: 'gramas' as UnitType,
+            quantity_units: null,
+            peso_por_unidade: null,
+          };
+        });
+
+      return {
+        id: `new-${Date.now()}-${mealIdx}`,
+        diet_plan_id: dietPlan?.id || '',
+        name: meal.name,
+        suggested_time: meal.suggested_time,
+        order_index: mealIdx,
+        foods,
+      };
+    });
+
+    setMeals(newMeals);
+    setShowTemplateModal(false);
   }
 
   function addMeal() {
@@ -417,6 +635,9 @@ export function DietManagement() {
       food_name: '',
       quantity: '',
       order_index: updated[mealIndex].foods.length,
+      unit_type: 'gramas',
+      quantity_units: null,
+      peso_por_unidade: null,
     };
     updated[mealIndex].foods.push(newFood);
     setMeals(updated);
@@ -436,9 +657,10 @@ export function DietManagement() {
     setMeals(updated);
   }
 
-  function handleFoodSelect(mealIndex: number, foodIndex: number, selectedFood: TabelaTaco) {
+  async function handleFoodSelect(mealIndex: number, foodIndex: number, selectedFood: TabelaTaco) {
     const updated = [...meals];
-    const currentQty = parseBrazilianNumber(updated[mealIndex].foods[foodIndex].quantity) || 100;
+    const currentFood = updated[mealIndex].foods[foodIndex];
+    const currentQty = parseBrazilianNumber(currentFood.quantity) || 100;
     const multiplier = currentQty / 100;
 
     // Valores base por 100g - usando parseBrazilianNumber para converter vírgula
@@ -447,9 +669,25 @@ export function DietManagement() {
     const carbsPer100g = parseBrazilianNumber(selectedFood.carboidrato);
     const fatsPer100g = parseBrazilianNumber(selectedFood.gordura);
 
+    // Fetch food_metadata to get peso_por_unidade
+    let pesoPorUnidade: number | null = null;
+    const { data: metadata } = await supabase
+      .from('food_metadata')
+      .select('peso_por_unidade')
+      .eq('taco_id', selectedFood.id)
+      .maybeSingle();
+
+    if (metadata) {
+      pesoPorUnidade = metadata.peso_por_unidade;
+    }
+
     updated[mealIndex].foods[foodIndex] = {
-      ...updated[mealIndex].foods[foodIndex],
+      ...currentFood,
       food_name: selectedFood.alimento,
+      peso_por_unidade: pesoPorUnidade,
+      // Reset to gramas when selecting new food
+      unit_type: 'gramas',
+      quantity_units: null,
       // Valores base por 100g
       calories_per_100g: caloriesPer100g,
       protein_per_100g: proteinPer100g,
@@ -464,17 +702,30 @@ export function DietManagement() {
     setMeals(updated);
   }
 
-  function handleQuantityChange(mealIndex: number, foodIndex: number, quantity: string) {
+  function handleQuantityChange(mealIndex: number, foodIndex: number, inputValue: string) {
     const updated = [...meals];
     const food = updated[mealIndex].foods[foodIndex];
-    const newQty = parseBrazilianNumber(quantity);
-    const multiplier = newQty / 100;
+    const inputNum = parseBrazilianNumber(inputValue);
+
+    let gramsQty: number;
+    let quantityUnits: number | null = null;
+
+    // If using units, convert to grams
+    if (food.unit_type !== 'gramas' && food.peso_por_unidade && food.peso_por_unidade > 0) {
+      quantityUnits = inputNum;
+      gramsQty = calculateGramsFromUnits(inputNum, food.peso_por_unidade);
+    } else {
+      gramsQty = inputNum;
+    }
+
+    const multiplier = gramsQty / 100;
 
     // Se tem valores base por 100g, recalcular
     if (food.calories_per_100g !== undefined) {
       updated[mealIndex].foods[foodIndex] = {
         ...food,
-        quantity,
+        quantity: String(Math.round(gramsQty)),
+        quantity_units: quantityUnits,
         calories: (food.calories_per_100g || 0) * multiplier,
         protein: (food.protein_per_100g || 0) * multiplier,
         carbs: (food.carbs_per_100g || 0) * multiplier,
@@ -483,10 +734,39 @@ export function DietManagement() {
     } else {
       updated[mealIndex].foods[foodIndex] = {
         ...food,
-        quantity,
+        quantity: String(Math.round(gramsQty)),
+        quantity_units: quantityUnits,
       };
     }
     setMeals(updated);
+  }
+
+  function handleUnitTypeChange(mealIndex: number, foodIndex: number, newUnitType: UnitType) {
+    const updated = [...meals];
+    const food = updated[mealIndex].foods[foodIndex];
+
+    // When switching unit type, reset quantity
+    updated[mealIndex].foods[foodIndex] = {
+      ...food,
+      unit_type: newUnitType,
+      quantity: newUnitType === 'gramas' ? food.quantity : '',
+      quantity_units: null,
+      // Reset calculated values when switching
+      calories: undefined,
+      protein: undefined,
+      carbs: undefined,
+      fats: undefined,
+    };
+    setMeals(updated);
+  }
+
+  // Get display value for quantity input based on unit type
+  function getQuantityInputValue(food: MealFoodWithNutrition): string {
+    if (food.unit_type === 'gramas') {
+      return food.quantity;
+    }
+    // For units, show quantity_units if available, otherwise empty
+    return food.quantity_units !== null ? String(food.quantity_units) : '';
   }
 
   async function removeFood(mealIndex: number, foodIndex: number) {
@@ -497,6 +777,59 @@ export function DietManagement() {
     const updated = [...meals];
     updated[mealIndex].foods = updated[mealIndex].foods.filter((_, i) => i !== foodIndex);
     setMeals(updated);
+  }
+
+  // Substitution helper functions
+  function getSubstitutionsForFood(foodName: string): LocalSubstitution[] {
+    return substitutions.filter(
+      (sub) => sub.original_food.toLowerCase() === foodName.toLowerCase() && !sub.isDeleted
+    );
+  }
+
+  function openSubstitutionModal(foodName: string) {
+    setEditingFoodName(foodName);
+    setNewSubstituteFood('');
+    setNewSubstituteQty('');
+    setShowSubstitutionModal(true);
+  }
+
+  function closeSubstitutionModal() {
+    setShowSubstitutionModal(false);
+    setEditingFoodName(null);
+    setNewSubstituteFood('');
+    setNewSubstituteQty('');
+  }
+
+  function addSubstitution() {
+    if (!editingFoodName || !newSubstituteFood || !newSubstituteQty) return;
+
+    const newSub: LocalSubstitution = {
+      id: `new-${Date.now()}`,
+      original_food: editingFoodName,
+      substitute_food: newSubstituteFood,
+      substitute_quantity: newSubstituteQty,
+      isNew: true,
+    };
+
+    setSubstitutions([...substitutions, newSub]);
+    setNewSubstituteFood('');
+    setNewSubstituteQty('');
+  }
+
+  function removeSubstitution(subId: string) {
+    setSubstitutions(
+      substitutions.map((sub) =>
+        sub.id === subId
+          ? sub.isNew
+            ? { ...sub, isDeleted: true } // Para novas, apenas marca como deletada (será filtrada)
+            : { ...sub, isDeleted: true } // Para existentes, marca para deletar no save
+          : sub
+      ).filter((sub) => !(sub.isNew && sub.isDeleted)) // Remove novas que foram deletadas
+    );
+  }
+
+  function handleSubstituteFoodSelect(selectedFood: TabelaTaco) {
+    setNewSubstituteFood(selectedFood.alimento);
   }
 
   if (loading) {
@@ -673,10 +1006,16 @@ export function DietManagement() {
         <section className={styles.mealsSection}>
           <div className={styles.mealsHeader}>
             <h2 className={styles.sectionTitle}>Refeições</h2>
-            <Button size="sm" variant="outline" onClick={addMeal}>
-              <Plus size={16} />
-              Adicionar
-            </Button>
+            <div className={styles.mealsActions}>
+              <Button size="sm" variant="outline" onClick={loadTemplates}>
+                <FileText size={16} />
+                Template
+              </Button>
+              <Button size="sm" variant="outline" onClick={addMeal}>
+                <Plus size={16} />
+                Adicionar
+              </Button>
+            </div>
           </div>
 
           {meals.map((meal, mealIndex) => {
@@ -723,16 +1062,37 @@ export function DietManagement() {
                             placeholder="Buscar alimento..."
                           />
                         </div>
+                        <div className={styles.unitTypeWrapper}>
+                          <Select
+                            value={food.unit_type}
+                            onChange={(e) => handleUnitTypeChange(mealIndex, foodIndex, e.target.value as UnitType)}
+                            options={UNIT_OPTIONS}
+                          />
+                        </div>
                         <div className={styles.quantityWrapper}>
                           <Input
                             type="number"
-                            value={food.quantity}
+                            value={getQuantityInputValue(food)}
                             onChange={(e) =>
                               handleQuantityChange(mealIndex, foodIndex, e.target.value)
                             }
-                            placeholder="g"
+                            placeholder={food.unit_type === 'gramas' ? 'g' : 'qtd'}
                           />
                         </div>
+                        {food.food_name && (
+                          <button
+                            className={styles.substitutionButton}
+                            onClick={() => openSubstitutionModal(food.food_name)}
+                            title="Gerenciar substituicoes"
+                          >
+                            <RefreshCw size={16} />
+                            {getSubstitutionsForFood(food.food_name).length > 0 && (
+                              <span className={styles.substitutionBadge}>
+                                {getSubstitutionsForFood(food.food_name).length}
+                              </span>
+                            )}
+                          </button>
+                        )}
                         <button
                           className={styles.deleteButton}
                           onClick={() => removeFood(mealIndex, foodIndex)}
@@ -740,6 +1100,18 @@ export function DietManagement() {
                           <Trash2 size={16} />
                         </button>
                       </div>
+                      {/* Show gram equivalent when using units */}
+                      {food.unit_type !== 'gramas' && food.quantity_units !== null && food.quantity_units > 0 && (
+                        <div className={styles.gramEquivalent}>
+                          = {food.quantity}g
+                        </div>
+                      )}
+                      {/* Warning when unit has no peso_por_unidade defined */}
+                      {food.unit_type !== 'gramas' && !food.peso_por_unidade && food.food_name && (
+                        <div className={styles.unitWarning}>
+                          Este alimento nao tem peso por {getUnitLabel(food.unit_type)} definido
+                        </div>
+                      )}
                       {food.calories !== undefined && food.calories > 0 && (
                         <div className={styles.foodNutrition}>
                           <span>{Math.round(food.calories)} kcal</span>
@@ -789,6 +1161,116 @@ export function DietManagement() {
           )}
         </div>
       </main>
+
+      {showTemplateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowTemplateModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Selecionar Template de Dieta</h3>
+              <button onClick={() => setShowTemplateModal(false)} className={styles.modalCloseBtn}>
+                ×
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              {loadingTemplates ? (
+                <p className={styles.modalLoading}>Carregando templates...</p>
+              ) : templates.length === 0 ? (
+                <p className={styles.modalEmpty}>Nenhum template cadastrado. Crie templates na Biblioteca.</p>
+              ) : (
+                <div className={styles.templateList}>
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      className={styles.templateItem}
+                      onClick={() => applyTemplate(template.id)}
+                    >
+                      <span className={styles.templateItemName}>{template.name}</span>
+                      {template.description && (
+                        <span className={styles.templateItemDesc}>{template.description}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className={styles.modalWarning}>
+              Atenção: Aplicar um template substituirá todas as refeições atuais.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Substituições */}
+      {showSubstitutionModal && editingFoodName && (
+        <div className={styles.modalOverlay} onClick={closeSubstitutionModal}>
+          <div className={styles.substitutionModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Substituicoes para: {editingFoodName}</h3>
+              <button onClick={closeSubstitutionModal} className={styles.modalCloseBtn}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              {/* Lista de substituições existentes */}
+              <div className={styles.substitutionList}>
+                <p className={styles.substitutionListLabel}>Substitutos cadastrados:</p>
+                {getSubstitutionsForFood(editingFoodName).length === 0 ? (
+                  <p className={styles.noSubstitutions}>Nenhuma substituicao cadastrada.</p>
+                ) : (
+                  getSubstitutionsForFood(editingFoodName).map((sub) => (
+                    <div key={sub.id} className={styles.substitutionItem}>
+                      <span className={styles.substitutionItemText}>
+                        {sub.substitute_food} ({sub.substitute_quantity}g)
+                      </span>
+                      <button
+                        className={styles.substitutionItemDelete}
+                        onClick={() => removeSubstitution(sub.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Adicionar nova substituição */}
+              <div className={styles.addSubstitutionSection}>
+                <p className={styles.addSubstitutionLabel}>Adicionar substituto:</p>
+                <div className={styles.addSubstitutionRow}>
+                  <div className={styles.addSubstitutionFood}>
+                    <FoodSelect
+                      value={newSubstituteFood}
+                      onChange={setNewSubstituteFood}
+                      onFoodSelect={handleSubstituteFoodSelect}
+                      placeholder="Buscar alimento..."
+                    />
+                  </div>
+                  <div className={styles.addSubstitutionQty}>
+                    <Input
+                      type="number"
+                      value={newSubstituteQty}
+                      onChange={(e) => setNewSubstituteQty(e.target.value)}
+                      placeholder="g"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={addSubstitution}
+                    disabled={!newSubstituteFood || !newSubstituteQty}
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <Button variant="outline" onClick={closeSubstitutionModal}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
@@ -91,6 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(cachedRole?.toLowerCase() === 'admin');
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initCompleteRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+
+  // Manter ref sempre atualizada com o userId atual
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (existingSession?.user) {
           // Tem sessão válida - restaurar
+          userIdRef.current = existingSession.user.id; // Atualizar ref ANTES do listener
           setSession(existingSession);
           setUser(existingSession.user);
 
@@ -168,13 +175,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        if (!isMounted) return;
+        console.log('[AuthContext] onAuthStateChange:', event, 'session:', !!newSession);
+
+        if (!isMounted) {
+          console.log('[AuthContext] Ignorando - componente desmontado');
+          return;
+        }
 
         // Ignorar eventos durante inicialização
-        if (!initCompleteRef.current) return;
+        if (!initCompleteRef.current) {
+          console.log('[AuthContext] Ignorando - init não completo');
+          return;
+        }
+
+        // IGNORAR eventos que não mudam nada significativo para evitar re-renders
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('[AuthContext] TOKEN_REFRESHED - ignorando');
+          return;
+        }
+
+        if (event === 'INITIAL_SESSION') {
+          console.log('[AuthContext] INITIAL_SESSION - ignorando (já tratado no initAuth)');
+          return;
+        }
 
         if (event === 'SIGNED_OUT' || !newSession) {
-          // Logout - limpar tudo
+          console.log('[AuthContext] SIGNED_OUT - limpando estado');
           setUser(null);
           setSession(null);
           setProfile(null);
@@ -184,11 +210,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === 'SIGNED_IN' && newSession?.user) {
-          // Login - atualizar estado
+          // IGNORAR se já está logado com o mesmo usuário (reconexão do Supabase)
+          // Usa ref para evitar closure stale
+          const currentUserId = userIdRef.current;
+          if (currentUserId === newSession.user.id) {
+            console.log('[AuthContext] SIGNED_IN - mesmo usuário, ignorando reconexão');
+            return;
+          }
+
+          // Também verificar via cache para mais segurança
+          const cachedId = getCachedUserId();
+          if (cachedId === newSession.user.id && currentUserId) {
+            console.log('[AuthContext] SIGNED_IN - mesmo usuário (via cache), ignorando reconexão');
+            return;
+          }
+
+          console.log('[AuthContext] SIGNED_IN - novo login, atualizando estado');
+          userIdRef.current = newSession.user.id; // Atualizar ref imediatamente
           setSession(newSession);
           setUser(newSession.user);
 
-          // Buscar profile
           const userProfile = await fetchProfile(newSession.user.id);
           if (isMounted && userProfile) {
             setProfile(userProfile);
@@ -196,11 +237,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setIsAdmin(roleFromDb);
             setCachedRole(userProfile.role, newSession.user.id);
           }
-        }
-
-        if (event === 'TOKEN_REFRESHED' && newSession) {
-          // Token atualizado - manter sessão
-          setSession(newSession);
         }
       }
     );

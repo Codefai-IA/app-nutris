@@ -6,17 +6,31 @@ import { formatFoodName } from '../../utils/formatters';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input } from './Input';
-import type { TabelaTaco } from '../../types/database';
+import type { TabelaTaco, UnitType } from '../../types/database';
 import styles from './AddExtraMealModal.module.css';
+
+const UNIT_OPTIONS: { value: UnitType; label: string }[] = [
+  { value: 'gramas', label: 'Gramas (g)' },
+  { value: 'unidade', label: 'Unidade' },
+  { value: 'fatia', label: 'Fatia' },
+];
 
 interface ExtraFood {
   id: string;
   name: string;
-  quantity: number;
+  quantity: number; // Always in grams for calculations
+  quantity_units: number | null; // Unit quantity if using units
+  unit_type: UnitType;
+  peso_por_unidade: number | null;
   calories: number;
   protein: number;
   carbs: number;
   fats: number;
+  // Store per 100g values for display when using units
+  calories_100g: number;
+  protein_100g: number;
+  carbs_100g: number;
+  fats_100g: number;
 }
 
 export interface ExtraMeal {
@@ -52,6 +66,8 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
   const [loading, setLoading] = useState(false);
   const [selectedFood, setSelectedFood] = useState<TabelaTaco | null>(null);
   const [quantity, setQuantity] = useState('100');
+  const [unitType, setUnitType] = useState<UnitType>('gramas');
+  const [pesoPorUnidade, setPesoPorUnidade] = useState<number | null>(null);
   const searchFoods = async (term: string) => {
     if (term.length < 2) {
       setSearchResults([]);
@@ -108,54 +124,120 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
     searchFoods(term);
   };
 
-  const handleSelectFood = (food: TabelaTaco) => {
+  const handleSelectFood = async (food: TabelaTaco) => {
     setSelectedFood(food);
     setSearchTerm(food.alimento);
     setSearchResults([]);
+    setUnitType('gramas');
+    setQuantity('100');
+    setPesoPorUnidade(null);
+
+    // Fetch food_metadata to get peso_por_unidade
+    try {
+      const { data: metadata } = await supabase
+        .from('food_metadata')
+        .select('peso_por_unidade')
+        .eq('food_name', food.alimento)
+        .maybeSingle();
+
+      if (metadata?.peso_por_unidade) {
+        setPesoPorUnidade(metadata.peso_por_unidade);
+      }
+    } catch (err) {
+      console.error('Error fetching food metadata:', err);
+    }
+  };
+
+  const handleUnitTypeChange = (newUnitType: UnitType) => {
+    if (newUnitType === 'gramas') {
+      // Switching to grams - if we had units, convert
+      if (unitType !== 'gramas' && pesoPorUnidade) {
+        const unitQty = parseFloat(quantity) || 1;
+        const grams = unitQty * pesoPorUnidade;
+        setQuantity(String(Math.round(grams)));
+      }
+    } else {
+      // Switching to units - start with 1
+      if (unitType === 'gramas') {
+        setQuantity('1');
+      }
+    }
+    setUnitType(newUnitType);
+  };
+
+  const getGramEquivalent = (): number | null => {
+    if (unitType === 'gramas') return null;
+    if (!pesoPorUnidade) return null;
+    const unitQty = parseFloat(quantity) || 0;
+    return Math.round(unitQty * pesoPorUnidade);
+  };
+
+  const getUnitLabel = (type: UnitType): string => {
+    switch (type) {
+      case 'fatia': return 'fatia(s)';
+      case 'unidade': return 'unidade(s)';
+      default: return 'g';
+    }
   };
 
   const addFoodToMeal = () => {
     if (!selectedFood) return;
 
-    const qty = parseFloat(quantity) || 100;
-    const multiplier = qty / 100;
+    const inputQty = parseFloat(quantity) || (unitType === 'gramas' ? 100 : 1);
+
+    // Calculate grams for macro calculation
+    let gramsForCalc: number;
+    let quantityUnits: number | null = null;
+
+    if (unitType === 'gramas') {
+      gramsForCalc = inputQty;
+    } else if (pesoPorUnidade) {
+      // Using units with known peso_por_unidade
+      quantityUnits = inputQty;
+      gramsForCalc = inputQty * pesoPorUnidade;
+    } else {
+      // No peso_por_unidade - treat as 100g per unit
+      quantityUnits = inputQty;
+      gramsForCalc = inputQty * 100;
+    }
+
+    const multiplier = gramsForCalc / 100;
+
+    // Store per 100g values
+    const calories100g = Math.round(parseBrazilianNumber(selectedFood.caloria));
+    const protein100g = Math.round(parseBrazilianNumber(selectedFood.proteina) * 10) / 10;
+    const carbs100g = Math.round(parseBrazilianNumber(selectedFood.carboidrato) * 10) / 10;
+    const fats100g = Math.round(parseBrazilianNumber(selectedFood.gordura) * 10) / 10;
 
     const newFood: ExtraFood = {
       id: crypto.randomUUID(),
       name: formatFoodName(selectedFood.alimento),
-      quantity: qty,
-      calories: Math.round(parseBrazilianNumber(selectedFood.caloria) * multiplier),
-      protein: Math.round(parseBrazilianNumber(selectedFood.proteina) * multiplier * 10) / 10,
-      carbs: Math.round(parseBrazilianNumber(selectedFood.carboidrato) * multiplier * 10) / 10,
-      fats: Math.round(parseBrazilianNumber(selectedFood.gordura) * multiplier * 10) / 10,
+      quantity: gramsForCalc, // Always store grams for totals
+      quantity_units: quantityUnits,
+      unit_type: unitType,
+      peso_por_unidade: pesoPorUnidade,
+      // Calculated values for this quantity
+      calories: Math.round(calories100g * multiplier),
+      protein: Math.round(protein100g * multiplier * 10) / 10,
+      carbs: Math.round(carbs100g * multiplier * 10) / 10,
+      fats: Math.round(fats100g * multiplier * 10) / 10,
+      // Per 100g values for display when using units
+      calories_100g: calories100g,
+      protein_100g: protein100g,
+      carbs_100g: carbs100g,
+      fats_100g: fats100g,
     };
 
     setFoods([...foods, newFood]);
     setSelectedFood(null);
     setSearchTerm('');
     setQuantity('100');
+    setUnitType('gramas');
+    setPesoPorUnidade(null);
   };
 
   const removeFood = (id: string) => {
     setFoods(foods.filter(f => f.id !== id));
-  };
-
-  const updateFoodQuantity = (id: string, newQty: string) => {
-    const qty = parseFloat(newQty) || 0;
-    setFoods(foods.map(f => {
-      if (f.id !== id) return f;
-      const originalMultiplier = f.quantity / 100;
-      const newMultiplier = qty / 100;
-      const ratio = originalMultiplier > 0 ? newMultiplier / originalMultiplier : newMultiplier;
-      return {
-        ...f,
-        quantity: qty,
-        calories: Math.round((f.calories / (f.quantity / 100)) * (qty / 100)),
-        protein: Math.round(((f.protein / (f.quantity / 100)) * (qty / 100)) * 10) / 10,
-        carbs: Math.round(((f.carbs / (f.quantity / 100)) * (qty / 100)) * 10) / 10,
-        fats: Math.round(((f.fats / (f.quantity / 100)) * (qty / 100)) * 10) / 10,
-      };
-    }));
   };
 
   const mealTotals = foods.reduce(
@@ -190,6 +272,8 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
     setSearchResults([]);
     setSelectedFood(null);
     setQuantity('100');
+    setUnitType('gramas');
+    setPesoPorUnidade(null);
     onClose();
   };
 
@@ -264,17 +348,42 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
             </div>
             <div className={styles.quantityRow}>
               <Input
-                label="Quantidade (g)"
+                label={unitType === 'gramas' ? 'Quantidade (g)' : 'Quantidade'}
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className={styles.quantityInput}
               />
+              <div className={styles.unitWrapper}>
+                <label className={styles.unitLabel}>Unidade</label>
+                <select
+                  value={unitType}
+                  onChange={(e) => handleUnitTypeChange(e.target.value as UnitType)}
+                  className={styles.unitSelect}
+                >
+                  {UNIT_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
               <Button onClick={addFoodToMeal} className={styles.addButton}>
                 <Plus size={18} />
                 Adicionar
               </Button>
             </div>
+            {unitType !== 'gramas' && (
+              <div className={styles.unitInfo}>
+                {pesoPorUnidade ? (
+                  <span className={styles.gramEquivalent}>
+                    = {getGramEquivalent()}g
+                  </span>
+                ) : (
+                  <span className={styles.unitWarning}>
+                    Peso por unidade nao cadastrado - usando 100g por unidade
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -282,31 +391,38 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
           <div className={styles.addedFoods}>
             <h4 className={styles.sectionTitle}>Alimentos adicionados</h4>
             <ul className={styles.foodList}>
-              {foods.map((food) => (
-                <li key={food.id} className={styles.foodItem}>
-                  <div className={styles.foodInfo}>
-                    <span className={styles.foodItemName}>{food.name}</span>
-                    <span className={styles.foodItemMacros}>
-                      {food.calories} kcal | P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
-                    </span>
-                  </div>
-                  <div className={styles.foodActions}>
-                    <input
-                      type="number"
-                      value={food.quantity}
-                      onChange={(e) => updateFoodQuantity(food.id, e.target.value)}
-                      className={styles.foodQuantityInput}
-                    />
-                    <span className={styles.gramLabel}>g</span>
-                    <button
-                      onClick={() => removeFood(food.id)}
-                      className={styles.removeButton}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {foods.map((food) => {
+                const isUsingUnits = food.unit_type !== 'gramas' && food.quantity_units !== null;
+                const displayQty = isUsingUnits
+                  ? `${food.quantity_units} ${getUnitLabel(food.unit_type)} (${Math.round(food.quantity)}g)`
+                  : `${Math.round(food.quantity)}g`;
+
+                return (
+                  <li key={food.id} className={styles.foodItem}>
+                    <div className={styles.foodInfo}>
+                      <span className={styles.foodItemName}>{food.name}</span>
+                      <span className={styles.foodItemQty}>{displayQty}</span>
+                      {isUsingUnits ? (
+                        <span className={styles.foodItemMacros}>
+                          {food.calories_100g} kcal | P: {food.protein_100g}g | C: {food.carbs_100g}g | G: {food.fats_100g}g (por 100g)
+                        </span>
+                      ) : (
+                        <span className={styles.foodItemMacros}>
+                          {food.calories} kcal | P: {food.protein}g | C: {food.carbs}g | G: {food.fats}g
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.foodActions}>
+                      <button
+                        onClick={() => removeFood(food.id)}
+                        className={styles.removeButton}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className={styles.totals}>

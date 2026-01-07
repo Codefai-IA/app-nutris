@@ -56,33 +56,19 @@ function ClientRoute({ children }: { children: React.ReactNode }) {
     };
   }, [profile?.plan_end_date]);
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-main)'
-      }}>
-        <div style={{ color: 'var(--text-muted)' }}>Carregando...</div>
-      </div>
-    );
-  }
-
   // Não logado -> login de aluno
-  if (!user) {
+  if (!user && !loading) {
     return <Navigate to="/login" replace />;
   }
 
   // Admin tentando acessar área de aluno -> redireciona para admin
-  if (isAdmin) {
+  if (isAdmin && !loading) {
     return <Navigate to="/admin" replace />;
   }
 
   // Check if plan expired (allow access to profile page)
   const isProfilePage = location.pathname === '/app/perfil';
-  if (planStatus.isExpired && !isProfilePage) {
+  if (planStatus.isExpired && !isProfilePage && !loading) {
     return (
       <PlanExpiredScreen
         planEndDate={planStatus.planEndDate!}
@@ -98,8 +84,25 @@ function ClientRoute({ children }: { children: React.ReactNode }) {
     planStatus.daysRemaining <= 7 &&
     planStatus.daysRemaining > 0;
 
+  // NUNCA desmonta os children - só mostra overlay de loading se necessário
   return (
     <>
+      {loading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255,255,255,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{ color: 'var(--text-muted)' }}>Carregando...</div>
+        </div>
+      )}
       {showExpiringBanner && <PlanExpiringBanner daysRemaining={planStatus.daysRemaining!} />}
       {children}
     </>
@@ -110,31 +113,38 @@ function ClientRoute({ children }: { children: React.ReactNode }) {
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
 
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-main)'
-      }}>
-        <div style={{ color: 'var(--text-muted)' }}>Carregando...</div>
-      </div>
-    );
-  }
-
   // Não logado -> login de admin
-  if (!user) {
+  if (!user && !loading) {
     return <Navigate to="/admin/login" replace />;
   }
 
   // Não é admin -> redireciona para área de aluno
-  if (!isAdmin) {
+  if (!isAdmin && !loading) {
     return <Navigate to="/app" replace />;
   }
 
-  return <>{children}</>;
+  // NUNCA desmonta os children
+  return (
+    <>
+      {loading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255,255,255,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+        }}>
+          <div style={{ color: 'var(--text-muted)' }}>Carregando...</div>
+        </div>
+      )}
+      {children}
+    </>
+  );
 }
 
 // Wrapper para forcar remontagem quando o ID muda

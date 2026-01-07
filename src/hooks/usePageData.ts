@@ -1,5 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 interface UsePageDataOptions {
   userId: string | undefined;
@@ -8,91 +7,124 @@ interface UsePageDataOptions {
 }
 
 /**
- * Hook that handles data fetching with proper triggers:
- * - Fetches on mount AND on every navigation to the page
- * - Refetches when userId changes
- * - Refetches on page visibility change (app resume)
- * - Refetches on window focus (tab switch back)
- * - Shows loading skeleton only on initial load
+ * Hook robusto para carregar dados com suporte a:
+ * - Refetch automático quando app volta ao foco (visibilitychange)
+ * - Proteção contra múltiplos fetches simultâneos
+ * - Recovery quando dados são perdidos
  */
 export function usePageData({ userId, fetchData, dependencies = [] }: UsePageDataOptions) {
-  const location = useLocation();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const isMountedRef = useRef(false);
-  const lastFetchTimeRef = useRef<number>(0);
+
+  // Refs para valores atuais (evita closures stale)
+  const fetchDataRef = useRef(fetchData);
+  const userIdRef = useRef(userId);
   const isFetchingRef = useRef(false);
+  const mountedRef = useRef(true);
+  const lastFetchTimeRef = useRef(0);
 
-  // Minimum time between refetches to avoid excessive calls (2 seconds)
-  const MIN_REFETCH_INTERVAL = 2000;
+  // Sempre atualiza as refs (sync, sem effect)
+  fetchDataRef.current = fetchData;
+  userIdRef.current = userId;
 
-  const handleFetch = useCallback(async (isInitial = false) => {
-    if (!userId) {
-      setIsInitialLoading(false);
+  // Função de fetch centralizada com proteção contra múltiplas chamadas
+  const doFetch = useCallback(async (isRefetch = false) => {
+    const uid = userIdRef.current;
+    if (!uid) {
+      console.log('[usePageData] Sem userId, aguardando...');
       return;
     }
 
-    // Prevent duplicate concurrent fetches
-    if (isFetchingRef.current) return;
+    // Evitar múltiplos fetches simultâneos
+    if (isFetchingRef.current) {
+      console.log('[usePageData] Fetch já em andamento, ignorando...');
+      return;
+    }
 
+    // Debounce: evitar refetch se o último foi há menos de 500ms
     const now = Date.now();
-    // Skip if we fetched recently (unless it's initial load)
-    if (!isInitial && now - lastFetchTimeRef.current < MIN_REFETCH_INTERVAL) {
+    if (isRefetch && now - lastFetchTimeRef.current < 500) {
+      console.log('[usePageData] Debounce ativo, ignorando refetch');
       return;
     }
 
     isFetchingRef.current = true;
     lastFetchTimeRef.current = now;
 
-    // Only show loading on initial fetch (when page first loads)
-    if (!isMountedRef.current) {
-      setIsInitialLoading(true);
-    }
+    console.log(`[usePageData] Iniciando ${isRefetch ? 'refetch' : 'fetch'}...`);
 
     try {
-      await fetchData();
-    } finally {
-      isFetchingRef.current = false;
-      if (!isMountedRef.current) {
-        isMountedRef.current = true;
+      await fetchDataRef.current();
+      if (mountedRef.current) {
+        console.log('[usePageData] Fetch completou com sucesso');
         setIsInitialLoading(false);
       }
-    }
-  }, [userId, fetchData]);
-
-  // Fetch on mount, navigation, and when userId/dependencies change
-  // Using location.key ensures refetch on every navigation to this page
-  useEffect(() => {
-    handleFetch(true);
-  }, [handleFetch, location.key, ...dependencies]);
-
-  // Refetch on page visibility change (when app comes back to foreground)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        handleFetch();
+    } catch (err) {
+      console.error('[usePageData] Erro no fetch:', err);
+      if (mountedRef.current) {
+        setIsInitialLoading(false);
       }
-    };
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, []);
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [handleFetch]);
-
-  // Refetch on window focus (when user switches browser tabs)
+  // Effect principal - roda quando userId ou dependencies mudam
   useEffect(() => {
-    const handleFocus = () => {
-      handleFetch();
+    mountedRef.current = true;
+
+    // Reset loading quando userId muda (novo usuário logou)
+    if (userId) {
+      setIsInitialLoading(true);
+      doFetch(false);
+    }
+
+    return () => {
+      mountedRef.current = false;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, ...dependencies]);
+
+  // Listener de visibilidade - refetch quando app volta ao foco
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!userIdRef.current) return;
+
+      console.log('[usePageData] App voltou ao foco - executando refetch');
+
+      // Pequeno delay para garantir que a conexão está estabilizada
+      setTimeout(() => {
+        if (mountedRef.current && userIdRef.current) {
+          doFetch(true);
+        }
+      }, 100);
     };
 
-    window.addEventListener('focus', handleFocus);
-    return () => {
-      window.removeEventListener('focus', handleFocus);
+    // Também refetch quando a janela ganha foco (cobre mais casos)
+    const onFocus = () => {
+      if (!userIdRef.current) return;
+      console.log('[usePageData] Janela ganhou foco - executando refetch');
+
+      setTimeout(() => {
+        if (mountedRef.current && userIdRef.current) {
+          doFetch(true);
+        }
+      }, 100);
     };
-  }, [handleFetch]);
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [doFetch]);
 
   return {
     isInitialLoading,
-    refetch: () => handleFetch(false),
+    refetch: useCallback(async () => {
+      await doFetch(true);
+    }, [doFetch]),
   };
 }

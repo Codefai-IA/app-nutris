@@ -131,14 +131,63 @@
   display: flex;
   gap: 12px;
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .quantityInput {
   flex: 1;
+  min-width: 80px;
+}
+
+.unitWrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+.unitLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.unitSelect {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.unitSelect:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .addButton {
   flex-shrink: 0;
+}
+
+.unitInfo {
+  margin-top: 8px;
+}
+
+.gramEquivalent {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.unitWarning {
+  font-size: 12px;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
 }
 
 .addedFoods {
@@ -188,6 +237,14 @@
   text-overflow: ellipsis;
 }
 
+.foodItemQty {
+  display: block;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
 .foodItemMacros {
   display: block;
   font-size: 12px;
@@ -200,27 +257,6 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-}
-
-.foodQuantityInput {
-  width: 60px;
-  padding: 6px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  text-align: center;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.foodQuantityInput:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-.gramLabel {
-  font-size: 13px;
-  color: var(--text-muted);
 }
 
 .removeButton {

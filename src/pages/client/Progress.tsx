@@ -1,12 +1,105 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { TrendingDown, TrendingUp, Droplets, Plus, Minus, CalendarDays, CheckCircle2, Clock } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
+import { TrendingDown, TrendingUp, Droplets, Plus, Minus, CalendarDays, CheckCircle2, Clock, Scale } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { usePageData } from '../../hooks';
 import { PageContainer, Header, BottomNav } from '../../components/layout';
-import { Card, ProgressBar, Button } from '../../components/ui';
+import { Card, ProgressBar, Button, Input } from '../../components/ui';
 import type { WeightHistory, DailyProgress } from '../../types/database';
 import styles from './Progress.module.css';
+
+// Componente separado para o gráfico de peso com linhas conectoras precisas
+function WeightChart({ weightHistory, styles }: { weightHistory: WeightHistory[]; styles: Record<string, string> }) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const dotsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [lines, setLines] = useState<{ x1: number; y1: number; x2: number; y2: number }[]>([]);
+
+  const chartData = weightHistory.slice(0, 7).reverse();
+  const maxWeight = Math.max(...chartData.map(w => Number(w.weight_kg)));
+  const minWeight = Math.min(...chartData.map(w => Number(w.weight_kg)));
+  const range = maxWeight - minWeight || 1;
+
+  const heights = chartData.map(record =>
+    Math.round(((Number(record.weight_kg) - minWeight) / range) * 40 + 60)
+  );
+
+  // Calcular posições das linhas após renderização
+  useLayoutEffect(() => {
+    const updateLines = () => {
+      if (!chartRef.current) return;
+
+      const chartRect = chartRef.current.getBoundingClientRect();
+      const newLines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+
+      for (let i = 0; i < dotsRef.current.length - 1; i++) {
+        const dot1 = dotsRef.current[i];
+        const dot2 = dotsRef.current[i + 1];
+
+        if (dot1 && dot2) {
+          const rect1 = dot1.getBoundingClientRect();
+          const rect2 = dot2.getBoundingClientRect();
+
+          // Posição relativa ao container do chart
+          const x1 = rect1.left - chartRect.left + rect1.width / 2;
+          const y1 = rect1.top - chartRect.top + rect1.height / 2;
+          const x2 = rect2.left - chartRect.left + rect2.width / 2;
+          const y2 = rect2.top - chartRect.top + rect2.height / 2;
+
+          newLines.push({ x1, y1, x2, y2 });
+        }
+      }
+
+      setLines(newLines);
+    };
+
+    // Pequeno delay para garantir que o layout está pronto
+    const timer = setTimeout(updateLines, 50);
+    window.addEventListener('resize', updateLines);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateLines);
+    };
+  }, [chartData.length, heights]);
+
+  return (
+    <div className={styles.weightChart} ref={chartRef}>
+      {/* SVG para as linhas conectoras */}
+      <svg className={styles.chartLines}>
+        {lines.map((line, index) => (
+          <line
+            key={index}
+            x1={line.x1}
+            y1={line.y1}
+            x2={line.x2}
+            y2={line.y2}
+            className={styles.svgConnectorLine}
+          />
+        ))}
+      </svg>
+
+      {chartData.map((record, index) => {
+        const currentHeight = heights[index];
+
+        return (
+          <div key={record.id} className={styles.chartBar}>
+            <span className={styles.barValue}>{record.weight_kg}kg</span>
+            <div className={styles.barContainer} style={{ height: `${currentHeight}px` }}>
+              <div
+                className={styles.barDot}
+                ref={el => { dotsRef.current[index] = el; }}
+              />
+              <div className={styles.bar} />
+            </div>
+            <span className={styles.barLabel}>
+              {new Date(record.recorded_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // Retorna a data atual no fuso horário de Brasília
 function getBrasiliaDate(): string {
@@ -25,6 +118,8 @@ export function Progress() {
   const [weeklyProgress, setWeeklyProgress] = useState<DailyProgress[]>([]);
   const [todayWater, setTodayWater] = useState(0);
   const [profileReady, setProfileReady] = useState(false);
+  const [newWeight, setNewWeight] = useState('');
+  const [savingWeight, setSavingWeight] = useState(false);
   const waterGoal = 3000; // 3L meta diária
 
   // Garantir que profile existe no banco
@@ -97,9 +192,78 @@ export function Progress() {
     fetchData: fetchAllData,
   });
 
+  // Garantir que dados sejam carregados quando profileReady mudar para true
+  useEffect(() => {
+    if (clientId && profileReady) {
+      fetchAllData();
+    }
+  }, [clientId, profileReady, fetchAllData]);
+
   // Refs para permitir múltiplos cliques rápidos
   const pendingWaterRef = useRef<number | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function handleAddWeight() {
+    if (!clientId || !profileReady || !newWeight) return;
+
+    const weightValue = parseFloat(newWeight.replace(',', '.'));
+    if (isNaN(weightValue) || weightValue <= 0 || weightValue > 500) {
+      alert('Por favor, insira um peso válido');
+      return;
+    }
+
+    setSavingWeight(true);
+
+    try {
+      const today = getBrasiliaDate();
+
+      // Verificar se já existe registro para hoje
+      const { data: existing } = await supabase
+        .from('weight_history')
+        .select('id')
+        .eq('client_id', clientId)
+        .gte('recorded_at', `${today}T00:00:00`)
+        .lt('recorded_at', `${today}T23:59:59`)
+        .maybeSingle();
+
+      if (existing) {
+        // Atualizar registro existente
+        const { error: updateError } = await supabase
+          .from('weight_history')
+          .update({ weight_kg: weightValue })
+          .eq('id', existing.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Inserir novo registro
+        const { error: insertError } = await supabase
+          .from('weight_history')
+          .insert({
+            client_id: clientId,
+            weight_kg: weightValue,
+            recorded_at: new Date().toISOString(),
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      // Atualizar peso atual no perfil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ current_weight_kg: weightValue })
+        .eq('id', clientId);
+
+      if (profileError) throw profileError;
+
+      setNewWeight('');
+      await fetchAllData();
+    } catch (error) {
+      console.error('Erro ao salvar peso:', error);
+      alert('Erro ao salvar peso. Tente novamente.');
+    }
+
+    setSavingWeight(false);
+  }
 
   function addWater(amount: number) {
     if (!clientId || !profileReady) return;
@@ -397,27 +561,31 @@ export function Progress() {
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Histórico de Peso</h2>
 
-          {weightHistory.length > 0 ? (
-            <div className={styles.weightChart}>
-              {weightHistory.slice(0, 7).reverse().map((record, index) => {
-                const maxWeight = Math.max(...weightHistory.map(w => Number(w.weight_kg)));
-                const minWeight = Math.min(...weightHistory.map(w => Number(w.weight_kg)));
-                const range = maxWeight - minWeight || 1;
-                const height = ((Number(record.weight_kg) - minWeight) / range) * 80 + 20;
-
-                return (
-                  <div key={record.id} className={styles.chartBar}>
-                    <div
-                      className={styles.bar}
-                      style={{ height: `${height}%` }}
-                    />
-                    <span className={styles.barLabel}>
-                      {new Date(record.recorded_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                    </span>
-                  </div>
-                );
-              })}
+          <Card className={styles.addWeightCard}>
+            <div className={styles.addWeightForm}>
+              <Scale size={20} className={styles.scaleIcon} />
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="500"
+                value={newWeight}
+                onChange={(e) => setNewWeight(e.target.value)}
+                placeholder="Seu peso hoje (kg)"
+                className={styles.weightInput}
+              />
+              <button
+                onClick={handleAddWeight}
+                disabled={savingWeight || !newWeight}
+                className={styles.addWeightBtn}
+              >
+                {savingWeight ? 'Salvando...' : 'Registrar'}
+              </button>
             </div>
+          </Card>
+
+          {weightHistory.length > 0 ? (
+            <WeightChart weightHistory={weightHistory} styles={styles} />
           ) : (
             <Card className={styles.emptyState}>
               <p>Nenhum registro de peso ainda</p>

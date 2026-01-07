@@ -42,6 +42,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,svg,jpeg,jpg,woff,woff2}'],
         globIgnores: ['**/card4.png'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api/, /\.[^/?]+$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -76,6 +78,7 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
+              networkTimeoutSeconds: 5,
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 5 // 5 minutes
@@ -88,8 +91,9 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true
-      }
+        enabled: false
+      },
+      selfDestroying: true
     })
   ],
   server: {

@@ -37,7 +37,7 @@ export function Header({
         <div className={styles.right}>
           {rightAction}
           <img
-            src="/logo.jpeg"
+            src="/logo-icon.png"
             alt="Logo"
             className={styles.logo}
           />

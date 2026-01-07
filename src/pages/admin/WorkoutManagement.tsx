@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Save, Plus, Trash2, GripVertical, Check, AlertCircle, Clock } from 'lucide-react';
+import { Save, Plus, Trash2, GripVertical, Check, AlertCircle, Clock, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PageContainer, Header } from '../../components/layout';
 import { Card, Input, Button, ExerciseSelect } from '../../components/ui';
@@ -33,6 +33,9 @@ export function WorkoutManagement() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [templates, setTemplates] = useState<{ id: string; name: string; description: string | null }[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -227,6 +230,98 @@ export function WorkoutManagement() {
     }
   }
 
+  async function loadTemplates() {
+    setLoadingTemplates(true);
+    const { data } = await supabase
+      .from('workout_templates')
+      .select('id, name, description')
+      .order('name');
+    setTemplates(data || []);
+    setLoadingTemplates(false);
+    setShowTemplateModal(true);
+  }
+
+  async function applyTemplate(templateId: string) {
+    if (!workoutPlan) return;
+
+    const { data: daysData } = await supabase
+      .from('workout_template_days')
+      .select(`
+        *,
+        workout_template_exercises (*)
+      `)
+      .eq('template_id', templateId);
+
+    if (!daysData) return;
+
+    // Deletar daily_workouts existentes para este plano (cascade deleta exercises)
+    const existingIds = dailyWorkouts
+      .filter(w => !w.id.startsWith('new-'))
+      .map(w => w.id);
+
+    if (existingIds.length > 0) {
+      await supabase
+        .from('daily_workouts')
+        .delete()
+        .in('id', existingIds);
+    }
+
+    const newWorkouts: DailyWorkoutWithExercises[] = [];
+
+    for (let day = 0; day < 7; day++) {
+      const templateDay = daysData.find(d => d.day_of_week === day);
+
+      if (templateDay) {
+        const exercises: Exercise[] = (templateDay.workout_template_exercises || [])
+          .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
+          .map((ex: {
+            name: string;
+            sets: number;
+            reps: string;
+            rest: string | null;
+            weight_kg: number | null;
+            video_url: string | null;
+            notes: string | null;
+            order_index: number;
+            technique_id: string | null;
+            effort_parameter_id: string | null;
+          }, idx: number) => ({
+            id: `new-${Date.now()}-${day}-${idx}`,
+            daily_workout_id: '',
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+            rest: ex.rest,
+            weight_kg: ex.weight_kg,
+            video_url: ex.video_url,
+            notes: ex.notes,
+            order_index: ex.order_index,
+            technique_id: ex.technique_id,
+            effort_parameter_id: ex.effort_parameter_id,
+          }));
+
+        newWorkouts.push({
+          id: `new-${day}`,
+          workout_plan_id: workoutPlan?.id || '',
+          day_of_week: day,
+          workout_type: templateDay.workout_type,
+          exercises,
+        });
+      } else {
+        newWorkouts.push({
+          id: `new-${day}`,
+          workout_plan_id: workoutPlan?.id || '',
+          day_of_week: day,
+          workout_type: null,
+          exercises: [],
+        });
+      }
+    }
+
+    setDailyWorkouts(newWorkouts);
+    setShowTemplateModal(false);
+  }
+
   function getCurrentWorkout() {
     return dailyWorkouts.find((w) => w.day_of_week === selectedDay);
   }
@@ -335,6 +430,13 @@ export function WorkoutManagement() {
       />
 
       <main className={styles.content}>
+        <div className={styles.templateSection}>
+          <Button size="sm" variant="outline" onClick={loadTemplates}>
+            <FileText size={16} />
+            Carregar Template
+          </Button>
+        </div>
+
         <div className={styles.daysScroll}>
           {DAYS.map((day, index) => (
             <button
@@ -517,6 +619,44 @@ export function WorkoutManagement() {
           )}
         </div>
       </main>
+
+      {showTemplateModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowTemplateModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Selecionar Template de Treino</h3>
+              <button onClick={() => setShowTemplateModal(false)} className={styles.modalCloseBtn}>
+                ×
+              </button>
+            </div>
+            <div className={styles.modalContent}>
+              {loadingTemplates ? (
+                <p className={styles.modalLoading}>Carregando templates...</p>
+              ) : templates.length === 0 ? (
+                <p className={styles.modalEmpty}>Nenhum template cadastrado. Crie templates na Biblioteca.</p>
+              ) : (
+                <div className={styles.templateList}>
+                  {templates.map((template) => (
+                    <button
+                      key={template.id}
+                      className={styles.templateItem}
+                      onClick={() => applyTemplate(template.id)}
+                    >
+                      <span className={styles.templateItemName}>{template.name}</span>
+                      {template.description && (
+                        <span className={styles.templateItemDesc}>{template.description}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <p className={styles.modalWarning}>
+              Atenção: Aplicar um template substituirá todos os treinos atuais.
+            </p>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

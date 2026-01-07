@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { Clock, ChevronRight, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Clock, ChevronRight, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { usePageData } from '../../hooks';
@@ -8,7 +8,8 @@ import { Card, Checkbox, Button, Modal, MacroPieChart, DailyMacrosSummary, AddEx
 import type { ExtraMeal } from '../../components/ui';
 import { parseBrazilianNumber } from '../../components/ui/FoodSelect';
 import { formatFoodName } from '../../utils/formatters';
-import type { Meal, MealFood, FoodSubstitution } from '../../types/database';
+import { formatQuantityDisplay } from '../../utils/foodUnits';
+import type { Meal, MealFood, FoodSubstitution, UnitType } from '../../types/database';
 import styles from './Diet.module.css';
 
 interface MealFoodWithNutrition extends MealFood {
@@ -56,17 +57,28 @@ export function Diet() {
   const [completedMeals, setCompletedMeals] = useState<string[]>([]);
   const [selectedMeal, setSelectedMeal] = useState<MealWithNutrition | null>(null);
   const [substitutions, setSubstitutions] = useState<FoodSubstitution[]>([]);
-  const [showSubstitutions, setShowSubstitutions] = useState(false);
-  const [selectedFood, setSelectedFood] = useState<MealFoodWithNutrition | null>(null);
+  const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set());
   const [_dietPlanId, setDietPlanId] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(getBrasiliaDate());
   const currentDateRef = useRef(currentDate);
   const [extraMeals, setExtraMeals] = useState<ExtraMeal[]>([]);
   const [showAddExtraMeal, setShowAddExtraMeal] = useState(false);
 
+  console.log('[Diet] render - profile?.id:', profile?.id, 'meals.length:', meals.length);
+
+  // Log de mount/unmount do componente
+  useEffect(() => {
+    console.log('[Diet] ===== COMPONENT MOUNTED =====');
+    return () => {
+      console.log('[Diet] ===== COMPONENT UNMOUNTED =====');
+    };
+  }, []);
+
   // Callback para buscar todos os dados
   const fetchAllData = useCallback(async () => {
+    console.log('[Diet] fetchAllData called - profile?.id:', profile?.id);
     await Promise.all([fetchDiet(), fetchProgress()]);
+    console.log('[Diet] fetchAllData DONE');
   }, [profile?.id]);
 
   // Hook que gerencia loading e refetch automático
@@ -150,6 +162,7 @@ export function Diet() {
   };
 
   async function fetchDiet() {
+    console.log('[Diet] fetchDiet started - profile?.id:', profile?.id);
     // Query única com JOIN para buscar diet_plan + meals + meal_foods
     const { data: dietPlanData } = await supabase
       .from('diet_plans')
@@ -178,7 +191,12 @@ export function Diet() {
       .eq('client_id', profile!.id)
       .maybeSingle();
 
-    if (!dietPlanData) return;
+    console.log('[Diet] fetchDiet - supabase query returned, dietPlanData:', !!dietPlanData);
+
+    if (!dietPlanData) {
+      console.log('[Diet] fetchDiet - NO dietPlanData, returning');
+      return;
+    }
     setDietPlanId(dietPlanData.id);
 
     // Extrair todos os nomes de alimentos únicos
@@ -257,11 +275,14 @@ export function Diet() {
         };
       });
 
+    console.log('[Diet] fetchDiet - setting meals, count:', mealsWithNutrition.length);
     setMeals(mealsWithNutrition);
     setSubstitutions(dietPlanData.food_substitutions || []);
+    console.log('[Diet] fetchDiet COMPLETE');
   }
 
   async function fetchProgress() {
+    console.log('[Diet] fetchProgress started');
     const today = getBrasiliaDate();
 
     const { data } = await supabase
@@ -276,6 +297,7 @@ export function Diet() {
     } else {
       setCompletedMeals([]);
     }
+    console.log('[Diet] fetchProgress COMPLETE');
   }
 
   async function toggleMeal(mealId: string) {
@@ -337,6 +359,28 @@ export function Diet() {
     );
   }
 
+  function toggleFoodExpansion(foodId: string) {
+    setExpandedFoods((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(foodId)) {
+        newSet.delete(foodId);
+      } else {
+        newSet.add(foodId);
+      }
+      return newSet;
+    });
+  }
+
+  function handleOpenMeal(meal: MealWithNutrition) {
+    setSelectedMeal(meal);
+    setExpandedFoods(new Set()); // Reset expanded foods when opening a new meal
+  }
+
+  function handleCloseMeal() {
+    setSelectedMeal(null);
+    setExpandedFoods(new Set());
+  }
+
   // Skeleton de carregamento
   const LoadingSkeleton = () => (
     <div className={styles.skeleton}>
@@ -352,6 +396,8 @@ export function Diet() {
       ))}
     </div>
   );
+
+  console.log('[Diet] RENDERING - loading:', loading, 'meals.length:', meals.length);
 
   return (
     <PageContainer>
@@ -377,7 +423,7 @@ export function Diet() {
                   key={meal.id}
                   hoverable
                   className={styles.mealCard}
-                  onClick={() => setSelectedMeal(meal)}
+                  onClick={() => handleOpenMeal(meal)}
                 >
                   <Checkbox
                     checked={isCompleted}
@@ -457,8 +503,8 @@ export function Diet() {
       </main>
 
       <Modal
-        isOpen={!!selectedMeal && !showSubstitutions}
-        onClose={() => setSelectedMeal(null)}
+        isOpen={!!selectedMeal}
+        onClose={handleCloseMeal}
         title={selectedMeal?.name}
         subtitle={selectedMeal?.suggested_time ? formatTime(selectedMeal.suggested_time) : undefined}
         showCheckbox
@@ -480,90 +526,62 @@ export function Diet() {
 
           <h4 className={styles.modalLabel}>Alimentos:</h4>
           <ul className={styles.foodList}>
-            {selectedMeal?.foods.map((food) => (
-              <li key={food.id} className={styles.foodItem}>
-                <span className={styles.foodBullet} />
-                <div className={styles.foodInfo}>
-                  <span className={styles.foodName}>{formatFoodName(food.food_name)}</span>
-                  <span className={styles.foodDetails}>
-                    {food.quantity}g
-                    {food.calories !== undefined && food.calories > 0 && (
-                      <> • {Math.round(food.calories)} kcal</>
-                    )}
-                  </span>
-                </div>
-              </li>
-            ))}
+            {selectedMeal?.foods.map((food) => {
+              const foodSubs = getSubstitutionsForFood(food.food_name);
+              const isExpanded = expandedFoods.has(food.id);
+              const hasSubstitutions = foodSubs.length > 0;
+
+              // Format quantity display based on unit_type
+              const quantityDisplay = formatQuantityDisplay(
+                parseBrazilianNumber(food.quantity),
+                food.quantity_units,
+                food.unit_type || 'gramas'
+              );
+
+              return (
+                <li key={food.id} className={styles.foodItemWrapper}>
+                  <div className={styles.foodItem}>
+                    <span className={styles.foodBullet} />
+                    <div className={styles.foodInfo}>
+                      <span className={styles.foodName}>{formatFoodName(food.food_name)}</span>
+                      <span className={styles.foodDetails}>
+                        {quantityDisplay}
+                        {food.calories !== undefined && food.calories > 0 && (
+                          <> • {Math.round(food.calories)} kcal</>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Botão para ver substituições */}
+                  {hasSubstitutions && (
+                    <button
+                      className={styles.substitutionToggle}
+                      onClick={() => toggleFoodExpansion(food.id)}
+                    >
+                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <span>Ver substituicoes ({foodSubs.length})</span>
+                    </button>
+                  )}
+
+                  {/* Lista de substituições inline */}
+                  {isExpanded && hasSubstitutions && (
+                    <div className={styles.inlineSubstitutions}>
+                      <span className={styles.substitutionHint}>Troque por:</span>
+                      {foodSubs.map((sub) => (
+                        <div key={sub.id} className={styles.substitutionRow}>
+                          <span className={styles.substitutionArrow}>→</span>
+                          <span>{formatFoodName(sub.substitute_food)} ({sub.substitute_quantity}g)</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
 
-          <Button
-            variant="outline"
-            fullWidth
-            onClick={() => setShowSubstitutions(true)}
-          >
-            <RefreshCw size={18} />
-            Substituir alimentos
-          </Button>
-
-          <Button fullWidth onClick={() => setSelectedMeal(null)}>
-            Fechar
-          </Button>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={showSubstitutions && !selectedFood}
-        onClose={() => setShowSubstitutions(false)}
-        title="Substituir alimentos"
-        subtitle="Selecione um alimento"
-      >
-        <div className={styles.modalContent}>
-          <p className={styles.modalLabel}>Selecione para substituir:</p>
-          <div className={styles.substitutionOptions}>
-            {selectedMeal?.foods.map((food) => (
-              <button
-                key={food.id}
-                className={styles.substitutionOption}
-                onClick={() => setSelectedFood(food)}
-              >
-                <span className={styles.radioCircle} />
-                <span>{formatFoodName(food.food_name)}</span>
-              </button>
-            ))}
-          </div>
-
-          <Button
-            variant="ghost"
-            fullWidth
-            onClick={() => setShowSubstitutions(false)}
-          >
-            Cancelar
-          </Button>
-        </div>
-      </Modal>
-
-      <Modal
-        isOpen={!!selectedFood}
-        onClose={() => setSelectedFood(null)}
-        title={`Substituicoes para ${formatFoodName(selectedFood?.food_name)}`}
-      >
-        <div className={styles.modalContent}>
-          {getSubstitutionsForFood(selectedFood?.food_name || '').length > 0 ? (
-            <ul className={styles.foodList}>
-              {getSubstitutionsForFood(selectedFood?.food_name || '').map((sub) => (
-                <li key={sub.id} className={styles.foodItem}>
-                  <span className={styles.foodBullet} />
-                  <span>{formatFoodName(sub.substitute_food)} ({sub.substitute_quantity})</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={styles.noSubstitutions}>
-              Nenhuma substituicao cadastrada para este alimento.
-            </p>
-          )}
-
-          <Button fullWidth onClick={() => setSelectedFood(null)}>
+          <Button fullWidth onClick={handleCloseMeal}>
             Fechar
           </Button>
         </div>

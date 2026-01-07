@@ -250,11 +250,13 @@ export function ExerciseSelect({
         <div className={styles.videoPreview}>
           {isYouTubeUrl(currentVideoUrl) ? (
             <div className={styles.youtubePreview}>
-              <img
-                src={getYouTubeThumbnail(currentVideoUrl)}
-                alt="Preview do vídeo"
-                className={styles.thumbnail}
-              />
+              {getYouTubeThumbnail(currentVideoUrl) && (
+                <img
+                  src={getYouTubeThumbnail(currentVideoUrl)}
+                  alt="Preview do vídeo"
+                  className={styles.thumbnail}
+                />
+              )}
               <a
                 href={currentVideoUrl}
                 target="_blank"

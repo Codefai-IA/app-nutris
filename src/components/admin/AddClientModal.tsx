@@ -121,12 +121,17 @@ export function AddClientModal({ isOpen, onClose, onSuccess }: AddClientModalPro
 
       // Success!
       setFormData(initialFormData);
-      onSuccess();
+      setLoading(false);
       onClose();
+      // Atualizar lista de clientes em background
+      try {
+        onSuccess();
+      } catch (e) {
+        console.error('Erro ao atualizar lista:', e);
+      }
     } catch (err) {
       console.error('Error creating client:', err);
       setError('Erro inesperado ao criar cliente');
-    } finally {
       setLoading(false);
     }
   }

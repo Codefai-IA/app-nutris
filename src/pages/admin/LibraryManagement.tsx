@@ -4,11 +4,15 @@ import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '../../components/layout';
 import { ExerciseLibraryManager } from '../../components/admin/ExerciseLibraryManager';
 import { FoodLibraryManager } from '../../components/admin/FoodLibraryManager';
+import { DietTemplatesManager } from '../../components/admin/DietTemplatesManager';
+import { WorkoutTemplatesManager } from '../../components/admin/WorkoutTemplatesManager';
 import styles from './LibraryManagement.module.css';
+
+type TabType = 'exercises' | 'foods' | 'dietTemplates' | 'workoutTemplates';
 
 export function LibraryManagement() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'exercises' | 'foods'>('exercises');
+  const [activeTab, setActiveTab] = useState<TabType>('exercises');
 
   return (
     <PageContainer hasBottomNav={false}>
@@ -18,7 +22,7 @@ export function LibraryManagement() {
         </button>
         <div className={styles.headerContent}>
           <h1 className={styles.title}>Biblioteca</h1>
-          <p className={styles.subtitle}>Gerencie exercicios e alimentos do sistema</p>
+          <p className={styles.subtitle}>Gerencie exercicios, alimentos e templates</p>
         </div>
       </header>
 
@@ -35,6 +39,18 @@ export function LibraryManagement() {
         >
           Alimentos
         </button>
+        <button
+          onClick={() => setActiveTab('dietTemplates')}
+          className={`${styles.tab} ${activeTab === 'dietTemplates' ? styles.tabActive : ''}`}
+        >
+          Templates Dieta
+        </button>
+        <button
+          onClick={() => setActiveTab('workoutTemplates')}
+          className={`${styles.tab} ${activeTab === 'workoutTemplates' ? styles.tabActive : ''}`}
+        >
+          Templates Treino
+        </button>
       </div>
 
       <main className={styles.content}>
@@ -43,6 +59,12 @@ export function LibraryManagement() {
         </div>
         <div style={{ display: activeTab === 'foods' ? 'block' : 'none' }}>
           <FoodLibraryManager />
+        </div>
+        <div style={{ display: activeTab === 'dietTemplates' ? 'block' : 'none' }}>
+          <DietTemplatesManager />
+        </div>
+        <div style={{ display: activeTab === 'workoutTemplates' ? 'block' : 'none' }}>
+          <WorkoutTemplatesManager />
         </div>
       </main>
     </PageContainer>

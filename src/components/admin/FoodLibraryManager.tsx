@@ -325,7 +325,7 @@ export function FoodLibraryManager() {
                     <span className={styles.macroG}>G: {formatValue(food.gordura || '0')}g</span>
                     <span className={styles.macroF}>F: {formatValue(food.fibra)}g</span>
                   </div>
-                  {hasUnit && food.food_metadata && (
+                  {hasUnit && food.food_metadata && UNIT_TYPES[food.food_metadata.unidade_tipo] && (
                     <div className={styles.unitInfo}>
                       {food.food_metadata.peso_por_unidade}g / {UNIT_TYPES[food.food_metadata.unidade_tipo].singular}
                     </div>

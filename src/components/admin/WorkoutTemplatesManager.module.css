@@ -1,0 +1,428 @@
+.container {
+  padding: 1rem;
+}
+
+.actionsBar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.searchWrapper {
+  flex: 1;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background: var(--primary-dark);
+}
+
+.stats {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.templateCard {
+  padding: 1rem;
+}
+
+.templateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.templateInfo {
+  flex: 1;
+}
+
+.templateName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.templateDesc {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.expandBtn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.templateDetails {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.noDays {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.dayPreview {
+  background: var(--bg-main);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.dayPreviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.dayPreviewName {
+  font-weight: 600;
+}
+
+.dayPreviewType {
+  font-size: 0.75rem;
+  color: var(--primary);
+  background: var(--primary-bg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.exercisePreviewList {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.exercisePreviewList li {
+  margin-bottom: 0.25rem;
+}
+
+.templateActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.editBtn,
+.duplicateBtn,
+.deleteBtn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.editBtn {
+  background: var(--primary);
+  color: white;
+  flex: 1;
+}
+
+.duplicateBtn {
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.deleteBtn {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 13, 21, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modal {
+  background: var(--bg-card);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  margin: 2rem 0;
+  max-height: none;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.form {
+  padding: 1rem;
+  overflow: visible;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--bg-card);
+}
+
+.formGroup textarea {
+  resize: vertical;
+}
+
+/* Days Section */
+.daysSection {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+  overflow: visible;
+}
+
+.daysScroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dayTab {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-main);
+  cursor: pointer;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.dayTabActive {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.dayCard {
+  padding: 1rem;
+  background: var(--bg-main);
+  overflow: visible;
+}
+
+.dayHeader {
+  margin-bottom: 1rem;
+}
+
+.dayHeader label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.exercisesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.exercisesHeader h4 {
+  margin: 0;
+}
+
+.exercisesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: visible;
+}
+
+.exerciseItem {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 0.75rem;
+  overflow: visible;
+}
+
+.exerciseGrip {
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 0.25rem;
+}
+
+.exerciseFields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: visible;
+}
+
+.exerciseRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.smallField {
+  flex: 1;
+}
+
+.smallField label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.smallField input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+
+.selectField {
+  flex: 1;
+}
+
+.selectField label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  background: var(--bg-card);
+}
+
+.removeExerciseBtn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--danger);
+  align-self: flex-start;
+}
+
+.noExercises {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.cancelBtn,
+.submitBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.submitBtn {
+  background: var(--primary);
+  color: white;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

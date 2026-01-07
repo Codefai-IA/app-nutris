@@ -321,3 +321,79 @@
 .addExtraButton {
   margin-top: 8px;
 }
+
+/* Inline Substitutions */
+.foodItemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.substitutionToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 20px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.substitutionToggle:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.substitutionToggle span {
+  font-weight: 500;
+}
+
+.inlineSubstitutions {
+  margin-left: 20px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.substitutionHint {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.substitutionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.substitutionRow:not(:last-child) {
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.substitutionArrow {
+  color: var(--accent);
+  font-weight: 600;
+}

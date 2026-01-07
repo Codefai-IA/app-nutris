@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { Button, Input } from '../../components/ui';
 import styles from './Login.module.css';
 
@@ -12,11 +13,14 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     if (!email.trim() || !password.trim()) {
@@ -49,11 +53,42 @@ export function Login() {
     }
   }
 
+  async function handleForgotPassword() {
+    setError('');
+    setSuccessMessage('');
+
+    if (!email.trim()) {
+      setError('Digite seu email para recuperar a senha');
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        {
+          redirectTo: `${window.location.origin}/reset-password`,
+        }
+      );
+
+      if (resetError) {
+        setError('Erro ao enviar email de recuperacao. Tente novamente.');
+      } else {
+        setSuccessMessage('Email de recuperacao enviado! Verifique sua caixa de entrada.');
+      }
+    } catch {
+      setError('Erro ao enviar email de recuperacao. Tente novamente.');
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.logo}>
-          <span className={styles.logoText}>MC</span>
+          <img src="/logo-icon.png" alt="Logo" className={styles.logoText} />
         </div>
       </div>
 
@@ -92,13 +127,19 @@ export function Login() {
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
+          {successMessage && <p className={styles.success}>{successMessage}</p>}
 
           <Button type="submit" fullWidth loading={loading}>
             Entrar
           </Button>
 
-          <button type="button" className={styles.forgotPassword}>
-            Esqueci minha senha
+          <button
+            type="button"
+            className={styles.forgotPassword}
+            onClick={handleForgotPassword}
+            disabled={resetLoading}
+          >
+            {resetLoading ? 'Enviando...' : 'Esqueci minha senha'}
           </button>
         </form>
       </div>

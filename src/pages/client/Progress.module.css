@@ -150,26 +150,75 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  height: 150px;
+  min-height: 180px;
   padding: 16px;
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
+  position: relative;
+}
+
+.chartLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.svgConnectorLine {
+  stroke: var(--accent);
+  stroke-width: 2px;
+  stroke-linecap: round;
 }
 
 .chartBar {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
+  position: relative;
 }
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.barDot {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+}
+
+/* Linha conectora removida - agora usa SVG */
 
 .bar {
   width: 24px;
+  flex: 1;
+  min-height: 20px;
+  margin-top: -6px;
   background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%);
-  border-radius: var(--radius-sm);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   transition: height 0.3s ease;
+}
+
+.barValue {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .barLabel {
@@ -310,7 +359,7 @@
   height: 40px;
   min-width: 40px;
   border-radius: 50%;
-  background: var(--bg-secondary);
+  background: var(--bg-main);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   display: flex;
@@ -422,7 +471,7 @@
 }
 
 .planDateBox {
-  background: var(--bg-secondary);
+  background: var(--bg-main);
   border-radius: var(--radius-md);
   padding: 12px;
   display: flex;
@@ -558,4 +607,64 @@
   margin: 0;
   font-size: 14px;
   color: var(--text-muted);
+}
+
+/* Add Weight Form */
+.addWeightCard {
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.addWeightForm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scaleIcon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.weightInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: all 0.2s;
+}
+
+.weightInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.weightInput::placeholder {
+  color: var(--text-muted);
+}
+
+.addWeightBtn {
+  padding: 12px 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.addWeightBtn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.addWeightBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
