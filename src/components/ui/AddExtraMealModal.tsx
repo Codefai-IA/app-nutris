@@ -75,15 +75,15 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
     }
 
     setLoading(true);
-    const normalizedTerm = normalizeText(term);
-    const searchWords = normalizedTerm.split(/\s+/).filter(w => w.length > 0);
 
     try {
+      // Busca direta no servidor com filtro ilike para encontrar todos os alimentos
       const { data, error } = await supabase
         .from('tabela_taco')
         .select('*')
+        .ilike('alimento', `%${term}%`)
         .order('alimento', { ascending: true })
-        .limit(500);
+        .limit(30);
 
       if (error) {
         console.error('Erro ao buscar alimentos:', error);
@@ -92,23 +92,19 @@ export function AddExtraMealModal({ isOpen, onClose, onAdd }: AddExtraMealModalP
       }
 
       if (data) {
-        const filtered = data.filter(food => {
-          const normalizedName = normalizeText(food.alimento);
-          return searchWords.every(word => normalizedName.includes(word));
-        });
-
-        filtered.sort((a, b) => {
+        // Ordena para priorizar alimentos que comecam com o termo buscado
+        const normalizedTerm = normalizeText(term);
+        const sorted = [...data].sort((a, b) => {
           const aName = normalizeText(a.alimento);
           const bName = normalizeText(b.alimento);
-          const firstWord = searchWords[0] || '';
-          const aStartsWith = aName.startsWith(firstWord);
-          const bStartsWith = bName.startsWith(firstWord);
+          const aStartsWith = aName.startsWith(normalizedTerm);
+          const bStartsWith = bName.startsWith(normalizedTerm);
           if (aStartsWith && !bStartsWith) return -1;
           if (!aStartsWith && bStartsWith) return 1;
           return aName.localeCompare(bName);
         });
 
-        setSearchResults(filtered.slice(0, 20));
+        setSearchResults(sorted);
       }
     } catch (err) {
       console.error('Erro ao buscar alimentos:', err);
