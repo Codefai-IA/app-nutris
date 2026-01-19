@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Plus, Minus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -64,6 +64,8 @@ export function Workout() {
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog>({});
   const [savingExercise, setSavingExercise] = useState<string | null>(null);
+  const [autoSaving, setAutoSaving] = useState<Set<string>>(new Set());
+  const autoSaveTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const today = getBrasiliaDate();
 
   const fetchAllData = useCallback(async () => {
@@ -228,6 +230,8 @@ export function Workout() {
         },
       };
     });
+    // Agendar auto-save
+    scheduleAutoSave(exerciseId);
   }
 
   // Adicionar série
@@ -251,6 +255,8 @@ export function Workout() {
         },
       };
     });
+    // Agendar auto-save
+    scheduleAutoSave(exerciseId);
   }
 
   // Remover última série
@@ -267,11 +273,15 @@ export function Workout() {
         },
       };
     });
+    // Agendar auto-save
+    scheduleAutoSave(exerciseId);
   }
 
   // Salvar log do exercício
-  async function saveExerciseLog(exerciseId: string, exercise: Exercise) {
-    setSavingExercise(exerciseId);
+  async function saveExerciseLog(exerciseId: string, exercise: Exercise, isAutoSave = false) {
+    if (!isAutoSave) {
+      setSavingExercise(exerciseId);
+    }
     const exerciseLog = exerciseLogs[exerciseId];
 
     try {
@@ -312,6 +322,15 @@ export function Workout() {
         },
       }));
 
+      // Remover do estado de auto-saving
+      if (isAutoSave) {
+        setAutoSaving(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(exerciseId);
+          return newSet;
+        });
+      }
+
       // Marcar como completo automaticamente se tiver dados
       const hasData = setsToSave.some(s => s.weight > 0 || s.reps > 0);
       if (hasData && !completedExercises.includes(exerciseId)) {
@@ -319,10 +338,51 @@ export function Workout() {
       }
     } catch (error) {
       console.error('Erro ao salvar log:', error);
+      // Remover do estado de auto-saving mesmo em caso de erro
+      if (isAutoSave) {
+        setAutoSaving(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(exerciseId);
+          return newSet;
+        });
+      }
     } finally {
-      setSavingExercise(null);
+      if (!isAutoSave) {
+        setSavingExercise(null);
+      }
     }
   }
+
+  // Agendar auto-save com debounce
+  function scheduleAutoSave(exerciseId: string) {
+    // Cancelar timeout anterior se existir
+    const existingTimeout = autoSaveTimeouts.current.get(exerciseId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Marcar como pendente de auto-save
+    setAutoSaving(prev => new Set(prev).add(exerciseId));
+
+    // Agendar novo auto-save em 2 segundos
+    const timeout = setTimeout(() => {
+      const exercise = exercises.find(e => e.id === exerciseId);
+      if (exercise && exerciseLogs[exerciseId] && !exerciseLogs[exerciseId].saved) {
+        saveExerciseLog(exerciseId, exercise, true);
+      }
+      autoSaveTimeouts.current.delete(exerciseId);
+    }, 2000);
+
+    autoSaveTimeouts.current.set(exerciseId, timeout);
+  }
+
+  // Limpar timeouts ao desmontar
+  useEffect(() => {
+    return () => {
+      autoSaveTimeouts.current.forEach(timeout => clearTimeout(timeout));
+      autoSaveTimeouts.current.clear();
+    };
+  }, []);
 
   const selectedWeekday = WEEKDAYS[selectedDay];
 
@@ -462,11 +522,11 @@ export function Workout() {
                           </div>
 
                           <button
-                            className={`${styles.saveBtn} ${log.saved ? styles.saved : ''}`}
+                            className={`${styles.saveBtn} ${log.saved ? styles.saved : ''} ${autoSaving.has(exercise.id) ? styles.autoSaving : ''}`}
                             onClick={() => saveExerciseLog(exercise.id, exercise)}
-                            disabled={savingExercise === exercise.id}
+                            disabled={savingExercise === exercise.id || autoSaving.has(exercise.id)}
                           >
-                            {savingExercise === exercise.id ? (
+                            {savingExercise === exercise.id || autoSaving.has(exercise.id) ? (
                               'Salvando...'
                             ) : log.saved ? (
                               <>

@@ -221,6 +221,51 @@ export interface TabelaTacoWithMetadata extends TabelaTaco {
   food_metadata?: FoodMetadata | null;
 }
 
+export interface ExtraMeal {
+  id: string;
+  client_id: string;
+  date: string;
+  meal_name: string;
+  created_at: string;
+}
+
+export interface ExtraMealFood {
+  id: string;
+  extra_meal_id: string;
+  food_id: number | null;
+  food_name: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
+export interface ExtraMealWithFoods extends ExtraMeal {
+  foods: ExtraMealFood[];
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fats: number;
+}
+
+export interface ExerciseLogSet {
+  set: number;
+  weight: number;
+  reps: number;
+}
+
+export interface ExerciseLogRecord {
+  id: string;
+  client_id: string;
+  exercise_id: string;
+  daily_workout_id: string;
+  date: string;
+  sets_completed: ExerciseLogSet[];
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -293,6 +338,21 @@ export interface Database {
         Row: FoodMetadata;
         Insert: Omit<FoodMetadata, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<FoodMetadata, 'id'>>;
+      };
+      extra_meals: {
+        Row: ExtraMeal;
+        Insert: Omit<ExtraMeal, 'id' | 'created_at'>;
+        Update: Partial<Omit<ExtraMeal, 'id'>>;
+      };
+      extra_meal_foods: {
+        Row: ExtraMealFood;
+        Insert: Omit<ExtraMealFood, 'id'>;
+        Update: Partial<Omit<ExtraMealFood, 'id'>>;
+      };
+      exercise_logs: {
+        Row: ExerciseLogRecord;
+        Insert: Omit<ExerciseLogRecord, 'id' | 'created_at'>;
+        Update: Partial<Omit<ExerciseLogRecord, 'id'>>;
       };
     };
   };

@@ -105,7 +105,7 @@ export function Diet() {
   // Callback para buscar todos os dados
   const fetchAllData = useCallback(async () => {
     console.log('[Diet] fetchAllData called - profile?.id:', profile?.id);
-    await Promise.all([fetchDiet(), fetchProgress(), fetchEquivalences()]);
+    await Promise.all([fetchDiet(), fetchProgress(), fetchEquivalences(), fetchExtraMeals()]);
     console.log('[Diet] fetchAllData DONE');
   }, [profile?.id]);
 
@@ -117,14 +117,15 @@ export function Diet() {
 
   // Verificar mudança de dia a cada minuto (reset automático à meia-noite)
   useEffect(() => {
-    const checkDayChange = () => {
+    const checkDayChange = async () => {
       const newDate = getBrasiliaDate();
       if (newDate !== currentDateRef.current) {
         currentDateRef.current = newDate;
         setCurrentDate(newDate);
         setCompletedMeals([]);
         setExtraMeals([]);
-        fetchProgress();
+        // Buscar dados do novo dia
+        await Promise.all([fetchProgress(), fetchExtraMeals()]);
       }
     };
 
@@ -179,14 +180,85 @@ export function Diet() {
     };
   }, [meals, completedMeals, extraMeals]);
 
-  // Adicionar refeição extra
-  const handleAddExtraMeal = (meal: ExtraMeal) => {
-    setExtraMeals([...extraMeals, meal]);
+  // Adicionar refeição extra (salva no banco de dados)
+  const handleAddExtraMeal = async (meal: ExtraMeal) => {
+    const today = getBrasiliaDate();
+
+    try {
+      // 1. Inserir a refeição extra
+      const { data: insertedMeal, error: mealError } = await supabase
+        .from('extra_meals')
+        .insert({
+          client_id: profile!.id,
+          date: today,
+          meal_name: meal.meal_name,
+        })
+        .select()
+        .single();
+
+      if (mealError || !insertedMeal) {
+        console.error('[Diet] Error inserting extra meal:', mealError);
+        return;
+      }
+
+      // 2. Inserir os alimentos da refeição
+      if (meal.foods && meal.foods.length > 0) {
+        const foodsToInsert = meal.foods.map((food) => ({
+          extra_meal_id: insertedMeal.id,
+          food_id: null, // food_id do tabela_taco se disponível
+          food_name: food.name,
+          quantity: food.quantity,
+          unit: food.unit_type || 'gramas',
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fats: food.fats,
+        }));
+
+        const { error: foodsError } = await supabase
+          .from('extra_meal_foods')
+          .insert(foodsToInsert);
+
+        if (foodsError) {
+          console.error('[Diet] Error inserting extra meal foods:', foodsError);
+          // Se falhar ao inserir alimentos, deletar a refeição
+          await supabase.from('extra_meals').delete().eq('id', insertedMeal.id);
+          return;
+        }
+      }
+
+      // 3. Atualizar estado local com o ID do banco
+      const newMeal: ExtraMeal = {
+        ...meal,
+        id: insertedMeal.id,
+      };
+      setExtraMeals([...extraMeals, newMeal]);
+      console.log('[Diet] Extra meal saved successfully:', insertedMeal.id);
+    } catch (error) {
+      console.error('[Diet] Error saving extra meal:', error);
+    }
   };
 
-  // Remover refeição extra
-  const handleRemoveExtraMeal = (id: string) => {
-    setExtraMeals(extraMeals.filter((m) => m.id !== id));
+  // Remover refeição extra (deleta do banco de dados)
+  const handleRemoveExtraMeal = async (id: string) => {
+    try {
+      // Deletar do banco (cascade deleta os alimentos automaticamente)
+      const { error } = await supabase
+        .from('extra_meals')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('[Diet] Error deleting extra meal:', error);
+        return;
+      }
+
+      // Atualizar estado local
+      setExtraMeals(extraMeals.filter((m) => m.id !== id));
+      console.log('[Diet] Extra meal deleted successfully:', id);
+    } catch (error) {
+      console.error('[Diet] Error removing extra meal:', error);
+    }
   };
 
   async function fetchDiet() {
@@ -421,6 +493,84 @@ export function Diet() {
     console.log('[Diet] fetchEquivalences COMPLETE - groups:', groupsWithFoods.length);
   }
 
+  // Buscar refeições extras do banco de dados
+  async function fetchExtraMeals() {
+    console.log('[Diet] fetchExtraMeals started');
+    const today = getBrasiliaDate();
+
+    try {
+      // Buscar refeições extras com seus alimentos
+      const { data: extraMealsData, error } = await supabase
+        .from('extra_meals')
+        .select(`
+          id,
+          client_id,
+          date,
+          meal_name,
+          created_at,
+          extra_meal_foods (
+            id,
+            extra_meal_id,
+            food_id,
+            food_name,
+            quantity,
+            unit,
+            calories,
+            protein,
+            carbs,
+            fats
+          )
+        `)
+        .eq('client_id', profile!.id)
+        .eq('date', today);
+
+      if (error) {
+        console.error('[Diet] Error fetching extra meals:', error);
+        return;
+      }
+
+      if (!extraMealsData || extraMealsData.length === 0) {
+        console.log('[Diet] No extra meals found for today');
+        setExtraMeals([]);
+        return;
+      }
+
+      // Converter para o formato ExtraMeal usado pelo componente
+      const formattedExtraMeals: ExtraMeal[] = extraMealsData.map((meal: any) => {
+        const foods = meal.extra_meal_foods || [];
+        return {
+          id: meal.id,
+          meal_name: meal.meal_name,
+          foods: foods.map((f: any) => ({
+            id: f.id,
+            name: f.food_name,
+            quantity: f.quantity,
+            quantity_units: null,
+            unit_type: f.unit as any,
+            peso_por_unidade: null,
+            calories: f.calories,
+            protein: f.protein,
+            carbs: f.carbs,
+            fats: f.fats,
+            calories_100g: 0,
+            protein_100g: 0,
+            carbs_100g: 0,
+            fats_100g: 0,
+          })),
+          total_calories: foods.reduce((sum: number, f: any) => sum + (f.calories || 0), 0),
+          total_protein: foods.reduce((sum: number, f: any) => sum + (f.protein || 0), 0),
+          total_carbs: foods.reduce((sum: number, f: any) => sum + (f.carbs || 0), 0),
+          total_fats: foods.reduce((sum: number, f: any) => sum + (f.fats || 0), 0),
+        };
+      });
+
+      setExtraMeals(formattedExtraMeals);
+      console.log('[Diet] fetchExtraMeals COMPLETE - count:', formattedExtraMeals.length);
+    } catch (error) {
+      console.error('[Diet] Error in fetchExtraMeals:', error);
+    }
+  }
+
   // Handle diet selection change
   async function handleDietChange(dietId: string) {
     if (dietId === selectedDietId) return;
@@ -558,16 +708,53 @@ export function Diet() {
     const normalizedDisplayName = displayName?.toLowerCase().trim();
 
     for (const group of equivalenceGroups) {
-      // Primeiro tenta encontrar pelo nome_simplificado (displayName)
-      let currentFood = normalizedDisplayName
-        ? group.foods.find((f) => f.food_name.toLowerCase().trim() === normalizedDisplayName)
-        : null;
+      let currentFood: FoodEquivalence | undefined = undefined;
 
-      // Se não encontrou pelo displayName, tenta pelo nome original
+      // 1. Primeiro tenta match EXATO pelo nome_simplificado (displayName)
+      if (normalizedDisplayName) {
+        currentFood = group.foods.find((f) => f.food_name.toLowerCase().trim() === normalizedDisplayName);
+      }
+
+      // 2. Se não encontrou, tenta match EXATO pelo nome original
       if (!currentFood) {
         currentFood = group.foods.find(
           (f) => f.food_name.toLowerCase().trim() === normalizedName
         );
+      }
+
+      // 3. Se não encontrou, tenta match PARCIAL (nome do alimento CONTÉM o nome da equivalência)
+      if (!currentFood) {
+        currentFood = group.foods.find((f) => {
+          const eqName = f.food_name.toLowerCase().trim();
+          return normalizedName.includes(eqName) ||
+                 eqName.includes(normalizedName) ||
+                 (normalizedDisplayName && (
+                   normalizedDisplayName.includes(eqName) ||
+                   eqName.includes(normalizedDisplayName)
+                 ));
+        });
+      }
+
+      // 4. Match especial para "Porção de X" - busca pelo nome do GRUPO
+      //    Ex: "Porção de Fruta" -> busca grupo que contém "Fruta" no nome
+      if (!currentFood) {
+        const groupName = group.name.toLowerCase().trim();
+        // Verifica se é um alimento do tipo "Porção de X" e se o grupo corresponde
+        const portionMatch = normalizedName.match(/porção\s+de\s+(\w+)/i) ||
+                            normalizedName.match(/porcao\s+de\s+(\w+)/i);
+        if (portionMatch && group.foods.length > 0) {
+          const portionType = portionMatch[1].toLowerCase();
+          // Se o nome do grupo contém o tipo da porção (ex: "Fruta" em "Frutas")
+          if (groupName.includes(portionType) || portionType.includes(groupName.replace('s', ''))) {
+            // Para "Porção de X", retorna TODOS os alimentos do grupo como equivalentes
+            // Usa o primeiro alimento como referência para cálculo proporcional
+            return {
+              group,
+              currentFood: group.foods[0],
+              equivalents: group.foods, // Retorna TODOS (incluindo o primeiro)
+            };
+          }
+        }
       }
 
       if (currentFood) {
