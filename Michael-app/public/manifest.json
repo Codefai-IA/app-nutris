@@ -1,0 +1,61 @@
+{
+  "name": "Michael Cezar Nutricionista",
+  "short_name": "MC Nutri",
+  "description": "App de acompanhamento nutricional e treinos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1c4c9b",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "72x72",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "96x96",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "128x128",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "144x144",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "152x152",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "384x384",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

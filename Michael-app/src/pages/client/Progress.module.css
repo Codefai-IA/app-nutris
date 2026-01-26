@@ -1,0 +1,670 @@
+.content {
+  padding: 0 20px 20px;
+  margin-top: -30px;
+}
+
+.mainCard {
+  margin-bottom: 16px;
+}
+
+.weightSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.weightMain {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.weightValue {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.weightUnit {
+  font-size: 20px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.weightChange {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.weightChange.positive {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.weightChange.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.goalProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goalLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.addWaterButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-left: auto;
+}
+
+.addWaterButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.addWaterButton:active {
+  transform: scale(0.95);
+}
+
+.addWaterButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.weightChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 180px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  position: relative;
+}
+
+.chartLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+
+.svgConnectorLine {
+  stroke: var(--accent);
+  stroke-width: 2px;
+  stroke-linecap: round;
+}
+
+.chartBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+}
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.barDot {
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+}
+
+/* Linha conectora removida - agora usa SVG */
+
+.bar {
+  width: 24px;
+  flex: 1;
+  min-height: 20px;
+  margin-top: -6px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  transition: height 0.3s ease;
+}
+
+.barValue {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.barLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.dayCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.dayCell.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.dayName {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.dayCell:not(.active) .dayName {
+  color: var(--text-muted);
+}
+
+.dayNumber {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dayCell:not(.active) .dayNumber {
+  color: var(--text-primary);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+/* Water Tracker Section */
+.waterCard {
+  padding: 20px;
+}
+
+.waterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.waterIcon {
+  color: #3b82f6;
+}
+
+.waterAmount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.waterValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.waterGoal {
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.waterProgressWrapper {
+  margin-bottom: 16px;
+}
+
+.waterPercent {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.glassesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.glass {
+  font-size: 20px;
+  opacity: 0.3;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.glass.filled {
+  opacity: 1;
+}
+
+.glassesLabel {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+.waterButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  padding: 0 8px;
+}
+
+.waterBtnSmall {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.waterBtnSmall:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.waterBtnSmall:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.waterBtnSmall:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.waterBtnAdd {
+  flex: 1;
+  max-width: 100px;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.waterBtnAdd:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.waterBtnAdd:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.waterBtnAdd:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Plan Progress Card Styles */
+.planCard {
+  padding: 20px;
+}
+
+.planStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.planStatusBadge.active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.planStatusBadge.completed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.planStatusBadge.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #f59e0b;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.planDatesDisplay {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.planDateBox {
+  background: var(--bg-main);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.planDateLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.planDateValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.planProgressBar {
+  margin-bottom: 16px;
+}
+
+.planProgressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.daysCounter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dayBox {
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dayBox.elapsed {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.dayBox.elapsed .dayNumber {
+  color: #22c55e;
+}
+
+.dayBox.total {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dayBox.total .dayNumber {
+  color: #3b82f6;
+}
+
+.dayBox.remaining {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.dayBox.remaining .dayNumber {
+  color: #f59e0b;
+}
+
+.dayBox.urgent {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dayBox.urgent .dayNumber {
+  color: #ef4444;
+}
+
+.dayNumber {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dayLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.daySubLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.motivationalMessage {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.motivationalMessage p {
+  margin: 0;
+  font-size: 14px;
+  color: #8b5cf6;
+}
+
+.motivationalMessage.completed {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+}
+
+.motivationalMessage.completed p {
+  color: #22c55e;
+}
+
+.planNotSet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.planNotSetIcon {
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.planNotSet p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Add Weight Form */
+.addWeightCard {
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.addWeightForm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scaleIcon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.weightInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: all 0.2s;
+}
+
+.weightInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.weightInput::placeholder {
+  color: var(--text-muted);
+}
+
+.addWeightBtn {
+  padding: 12px 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.addWeightBtn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.addWeightBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

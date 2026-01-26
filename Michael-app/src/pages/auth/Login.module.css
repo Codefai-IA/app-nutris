@@ -1,0 +1,125 @@
+.container {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(180deg, var(--dark) 0%, var(--secondary) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoText {
+  width: 150px;
+  height: auto;
+}
+
+.formCard {
+  background: var(--bg-card);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  padding: 32px 20px 40px;
+  animation: slideUp 0.5s ease-out;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0 0 32px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.passwordWrapper {
+  position: relative;
+}
+
+.togglePassword {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  padding: 4px;
+}
+
+.togglePassword:hover {
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--error);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+.success {
+  color: var(--success);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+.forgotPassword {
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.forgotPassword:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.forgotPassword:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.adminLink {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.adminLink a {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.adminLink a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

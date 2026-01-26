@@ -1,0 +1,542 @@
+.content {
+  padding: 0 20px 20px;
+  margin-top: -30px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  margin-bottom: 24px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.menuList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.menuLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menuIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menuIcon.ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.menuIcon.warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.menuIcon.notset {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+.menuContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.menuText {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.menuStatus {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.menuStatus.ok {
+  color: #16a34a;
+}
+
+.menuStatus.warning {
+  color: #ca8a04;
+}
+
+.menuStatus.notset {
+  color: #6b7280;
+}
+
+.menuArrow {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.deleteModal {
+  text-align: center;
+}
+
+.deleteModal p {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+
+.deleteWarning {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.deleteButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.deleteButtons button {
+  flex: 1;
+}
+
+/* Plan Dates Section */
+.planDatesCard {
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.planDatesTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.planDatesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dateLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.dateInput {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.planDurationPreview {
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #3b82f6;
+}
+
+.saveDatesBtn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.saveDatesBtn:hover:not(:disabled) {
+  transform: scale(1.01);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+.saveDatesBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveDatesBtn.saved {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Email Section */
+.emailSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-light);
+  width: 100%;
+}
+
+.emailDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.emailDisplay svg {
+  color: var(--text-muted);
+}
+
+.passwordButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.passwordButton:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+/* Password Modal */
+.passwordModal {
+  padding: 4px 0;
+}
+
+.passwordEmail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-page);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.passwordError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #dc2626;
+  margin-bottom: 16px;
+}
+
+.passwordSection {
+  margin-bottom: 20px;
+}
+
+.passwordSection h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.passwordHint {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.passwordSuccess {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.passwordSuccess svg {
+  color: #16a34a;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.passwordSuccess strong {
+  display: block;
+  font-size: 14px;
+  color: #16a34a;
+  margin-bottom: 4px;
+}
+
+.passwordSuccess p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.passwordModalFooter {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Diets Section */
+.dietsSection {
+  margin-bottom: 12px;
+}
+
+.dietsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dietsSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.addDietButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.addDietButton:hover {
+  background: var(--primary-dark);
+}
+
+.noDietsCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.noDietsCard p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.dietsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dietCard {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.dietCardLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dietCardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.dietCardName {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dietCardActions {
+  display: flex;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+.dietActionBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dietActionBtn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.dietActionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dietDeleteBtn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.dietDeleteBtn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* New Diet Modal */
+.newDietModal {
+  padding: 4px 0;
+}
+
+.newDietField {
+  margin-bottom: 20px;
+}
+
+.newDietField label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.newDietButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.newDietButtons button {
+  flex: 1;
+}

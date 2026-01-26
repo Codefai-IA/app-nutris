@@ -1,0 +1,554 @@
+.content {
+  padding: 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Diet Selector */
+.dietSelector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+}
+
+.dietSelectorLabel {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.dietSelectorSelect {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.dietSelectorSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.singleDietName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  margin-bottom: 4px;
+}
+
+.mealCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.mealContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.mealName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 4px;
+}
+
+.mealName.completed {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.mealMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 4px;
+}
+
+.mealTime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.mealCalories {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.mealHint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Meal Options Tabs/Pills */
+.mealOptionsTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.mealOptionTab {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mealOptionTab:hover {
+  background: var(--bg-main);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.mealOptionTabActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.mealOptionTabActive:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.arrowButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+/* Modal content */
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modalLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.foodList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.foodItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.foodBullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.substitutionOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.substitutionOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  text-align: left;
+  font-size: 15px;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.substitutionOption:hover {
+  border-color: var(--accent);
+}
+
+.radioCircle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-medium);
+  flex-shrink: 0;
+}
+
+.substitutionOption:hover .radioCircle {
+  border-color: var(--accent);
+}
+
+.noSubstitutions {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px 0;
+}
+
+/* Chart Section */
+.chartSection {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 8px;
+}
+
+/* Food Info */
+.foodInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.foodName {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.foodDetails {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Loading Skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeletonCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.skeletonCheckbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--border-light) 0%, var(--bg-secondary) 50%, var(--border-light) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonTitle {
+  width: 60%;
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--border-light) 0%, var(--bg-secondary) 50%, var(--border-light) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeletonMeta {
+  width: 40%;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--border-light) 0%, var(--bg-secondary) 50%, var(--border-light) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+  animation-delay: 0.1s;
+}
+
+.skeletonArrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--border-light) 0%, var(--bg-secondary) 50%, var(--border-light) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+  animation-delay: 0.2s;
+}
+
+/* Extra Meals Section */
+.extraMealsSection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border-light);
+}
+
+.extraMealsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.extraMealCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-medium);
+}
+
+.extraMealContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.extraMealName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.extraMealMacros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.extraMealCalories {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.removeExtraButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.removeExtraButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.addExtraButton {
+  margin-top: 8px;
+}
+
+/* Inline Substitutions */
+.foodItemWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.substitutionToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 20px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.substitutionToggle:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.substitutionToggle span {
+  font-weight: 500;
+}
+
+.inlineSubstitutions {
+  margin-left: 20px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.substitutionHint {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.substitutionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.substitutionRow:not(:last-child) {
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.substitutionArrow {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Equivalences (similar style to substitutions but with different color) */
+.equivalenceToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 20px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--primary);
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.equivalenceToggle:hover {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.equivalenceToggle span {
+  font-weight: 500;
+}
+
+.inlineEquivalences {
+  margin-left: 20px;
+  padding: 12px 16px;
+  background: rgba(124, 58, 237, 0.05);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  animation: slideDown 0.2s ease-out;
+}
+
+.equivalenceGroupName {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.equivalenceHint {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.equivalenceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.equivalenceRow:not(:last-child) {
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.equivalenceArrow {
+  color: var(--primary);
+  font-weight: 600;
+}

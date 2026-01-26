@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm init vite@latest . -- --template react-ts --yes)",
+      "Bash(npx --yes create-vite@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(copy \"c:\\Users\\flor3\\Downloads\\WhatsApp Image 2025-12-01 at 19.12.04 (1).jpeg\" \"C:\\Users\\flor3\\OneDrive\\Área de Trabalho\\Michael 2.0\\public\\logo.jpeg\")",
+      "Bash(start http://localhost:5173)",
+      "Bash(start http://localhost:3000)",
+      "Bash(timeout:*)",
+      "Bash(copy \"c:\\Users\\flor3\\Downloads\\Gemini_Generated_Image_799nv4799nv4799n-removebg-preview.png\" \"C:\\Users\\flor3\\OneDrive\\Área de Trabalho\\Michael 2.0\\public\\expired-icon.png\")",
+      "Bash(cmd /c copy \"c:\\Users\\flor3\\Downloads\\Gemini_Generated_Image_799nv4799nv4799n-removebg-preview.png\" \"C:\\Users\\flor3\\OneDrive\\Área de Trabalho\\Michael 2.0\\public\\expired-icon.png\")",
+      "Bash(cmd /c dir \"C:\\Users\\flor3\\OneDrive\\Área de Trabalho\\Michael 2.0\\public\\expired-icon.png\")",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(start http://localhost:5991)",
+      "Bash(cmd /c start \"\" \"http://localhost:5991\")",
+      "Bash(npx tsc:*)",
+      "Bash(findstr:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cmd /c start \"\" \"http://localhost:5173\")",
+      "Bash(gh run list:*)",
+      "Bash(cmd /c start \"\" \"http://localhost:5174\")",
+      "Bash(cat:*)",
+      "Bash(npm run preview:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

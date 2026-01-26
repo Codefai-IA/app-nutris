@@ -1,0 +1,36 @@
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.hoverable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.hoverable:active {
+  transform: translateY(0);
+}
+
+/* Variants */
+.gradient {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  border: none;
+}
+
+/* Padding */
+.padding-sm {
+  padding: 12px;
+}
+
+.padding-md {
+  padding: 16px 20px;
+}
+
+.padding-lg {
+  padding: 20px 24px;
+}

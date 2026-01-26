@@ -1,0 +1,161 @@
+.content {
+  padding: 20px;
+  padding-bottom: 100px;
+}
+
+.skeleton {
+  height: 140px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonLarge {
+  height: 220px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.emptySubtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.cardsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guidelineCard {
+  padding: 16px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cardIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardIcon.supplements {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.cardIcon.manipulated {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.cardIcon.freeMeal {
+  background: rgba(244, 162, 97, 0.15);
+  color: var(--primary);
+}
+
+.cardIcon.notes {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cardContent {
+  padding: 16px;
+  border-radius: var(--radius-md);
+}
+
+.supplementsBg {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.manipulatedBg {
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.notesBg {
+  background: var(--bg-secondary);
+}
+
+.cardText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.videoDescription {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.videoWrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #000;
+}
+
+.videoFrame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}

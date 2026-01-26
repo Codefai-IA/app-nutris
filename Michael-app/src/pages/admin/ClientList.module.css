@@ -1,0 +1,216 @@
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 24px 20px;
+  border-radius: 0 0 var(--radius-3xl) var(--radius-3xl);
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoText {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.brandText {
+  flex: 1;
+}
+
+.brandName {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.brandTitle {
+  font-size: 12px;
+  letter-spacing: 2px;
+  opacity: 0.9;
+  margin: 2px 0 0;
+}
+
+.libraryButton,
+.logoutButton {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.libraryButton:hover,
+.logoutButton:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.content {
+  padding: 20px;
+}
+
+.searchWrapper {
+  margin-bottom: 16px;
+}
+
+.clientCount {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+.clientList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.clientLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.clientCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.clientAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.clientAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.clientInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.clientName {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.clientSince {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+}
+
+.clientGoal {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+
+.statusRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+}
+
+.statusBadge.ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.statusBadge.warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #ca8a04;
+}
+
+.statusBadge.notset {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+.clientArrow {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-accent);
+  z-index: 50;
+  transition: all 0.2s;
+}
+
+.fab:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}

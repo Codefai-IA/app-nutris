@@ -1,0 +1,131 @@
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 24px 20px 60px;
+  border-radius: 0 0 var(--radius-3xl) var(--radius-3xl);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 15px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.content {
+  padding: 0 20px 20px;
+  margin-top: -40px;
+}
+
+.progressCard {
+  margin-bottom: 24px;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.progressBarWrapper {
+  margin-bottom: 12px;
+}
+
+.progressStats {
+  font-size: 14px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.section {
+  margin-top: 8px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 12px;
+}
+
+.todayCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cardIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 4px;
+}
+
+.cardSubtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.cardProgress {
+  max-width: 150px;
+}
+
+.cardArrow {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.bannerImage {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  margin: 24px 0 8px;
+  box-shadow: var(--shadow-md);
+}

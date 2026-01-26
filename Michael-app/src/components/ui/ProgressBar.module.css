@@ -1,0 +1,46 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.track {
+  flex: 1;
+  background: var(--border-light);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.track.sm {
+  height: 6px;
+}
+
+.track.md {
+  height: 8px;
+}
+
+.bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.bar.default {
+  background: var(--primary);
+}
+
+.bar.accent {
+  background: var(--accent);
+}
+
+.bar.success {
+  background: #22C55E;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 40px;
+  text-align: right;
+}

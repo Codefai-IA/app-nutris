@@ -1,0 +1,67 @@
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 20px 20px 50px;
+  border-radius: 0 0 var(--radius-3xl) var(--radius-3xl);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.backButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  margin-left: -8px;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  opacity: 0.8;
+  margin: 4px 0 0;
+}
+
+.right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.content {
+  margin-top: 20px;
+}

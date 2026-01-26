@@ -1,0 +1,71 @@
+.container {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+
+.macrosGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.macroRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.macroRow.remaining {
+  color: var(--text-secondary);
+}
+
+.label {
+  font-weight: 600;
+  min-width: 65px;
+}
+
+.value {
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 75px;
+}
+
+.macroRow.remaining .value {
+  color: var(--text-secondary);
+}
+
+.macro {
+  padding: 2px 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.progressWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.percentLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+}

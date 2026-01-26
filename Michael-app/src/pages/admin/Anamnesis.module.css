@@ -1,0 +1,175 @@
+.content {
+  padding: 0 20px 20px;
+  margin-top: -30px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.section {
+  margin-bottom: 16px;
+  padding: 20px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 44px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.radioGroup {
+  display: flex;
+  gap: 24px;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radio input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+}
+
+.radio span {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.weeklyGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dayField {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dayLabel {
+  width: 70px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Macro Goals Section */
+.goalsSection {
+  background: linear-gradient(135deg, rgba(28, 76, 155, 0.05) 0%, rgba(243, 152, 91, 0.05) 100%);
+}
+
+.goalsSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 8px;
+}
+
+.goalsDescription {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.goalsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.goalField {
+  display: flex;
+  flex-direction: column;
+}
+
+.goalField label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.optionalLabel {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 12px;
+}
