@@ -67,10 +67,26 @@ export function Workout() {
   const [savingExercise, setSavingExercise] = useState<string | null>(null);
   const [autoSaving, setAutoSaving] = useState<Set<string>>(new Set());
   const autoSaveTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const today = getBrasiliaDate();
+  const exerciseLogsRef = useRef<ExerciseLog>({});
+  const [currentDate, setCurrentDate] = useState(getBrasiliaDate());
+  const currentDateRef = useRef(currentDate);
+  const fetchAllDataRef = useRef<() => Promise<void>>();
+
+  // Manter ref sincronizado com o estado
+  useEffect(() => {
+    exerciseLogsRef.current = exerciseLogs;
+  }, [exerciseLogs]);
+
+  // Manter ref da data sincronizada
+  useEffect(() => {
+    currentDateRef.current = currentDate;
+  }, [currentDate]);
 
   const fetchAllData = useCallback(async () => {
     if (!profile?.id) return;
+
+    // Usar ref para garantir data mais atual (evita stale closure)
+    const today = currentDateRef.current;
 
     // Buscar workout plan e progresso em paralelo
     const [planResult, progressResult] = await Promise.all([
@@ -117,38 +133,53 @@ export function Workout() {
 
     setWorkout(dailyWorkout);
 
-    // Buscar exercicios e logs em paralelo
-    const [exercisesResult, logsResult] = await Promise.all([
-      supabase
-        .from('exercises')
-        .select('*')
-        .eq('daily_workout_id', dailyWorkout.id)
-        .order('order_index'),
-      supabase
-        .from('exercise_logs')
-        .select('*')
-        .eq('client_id', profile.id)
-        .eq('date', today)
-    ]);
+    // Buscar exercicios
+    const { data: exercisesData } = await supabase
+      .from('exercises')
+      .select('*')
+      .eq('daily_workout_id', dailyWorkout.id)
+      .order('order_index');
 
-    const exercisesData = exercisesResult.data || [];
-    const logs = logsResult.data || [];
+    const exercises = exercisesData || [];
+    setExercises(exercises);
 
-    setExercises(exercisesData);
+    if (exercises.length === 0) {
+      setExerciseLogs({});
+      return;
+    }
 
-    // Processar logs
+    // Buscar logs mais recentes de cada exercício (sem filtrar por data)
+    // Ordenado por data DESC para pegar o mais recente primeiro
+    const exerciseIds = exercises.map(e => e.id);
+    const { data: allLogs } = await supabase
+      .from('exercise_logs')
+      .select('*')
+      .eq('client_id', profile.id)
+      .in('exercise_id', exerciseIds)
+      .order('date', { ascending: false });
+
+    const logs = allLogs || [];
+
+    // Processar logs - pegar o mais recente de cada exercício
     const newLogs: ExerciseLog = {};
-    exercisesData.forEach(exercise => {
-      const existingLog = logs.find(l => l.exercise_id === exercise.id);
+    exercises.forEach(exercise => {
+      // Encontra o log mais recente deste exercício (já está ordenado por data DESC)
+      const mostRecentLog = logs.find(l => l.exercise_id === exercise.id);
       const plannedSets = parseInt(exercise.sets?.toString() || '3');
 
-      if (existingLog && existingLog.sets_completed) {
+      if (mostRecentLog && mostRecentLog.sets_completed) {
+        // Usa os dados do último treino salvo
         newLogs[exercise.id] = {
-          sets: existingLog.sets_completed,
-          saved: true,
+          sets: mostRecentLog.sets_completed.map((s: { set: number; weight: number; reps: number }) => ({
+            set: s.set,
+            weight: s.weight?.toString() || '',
+            reps: s.reps?.toString() || '',
+          })),
+          saved: false, // Marcar como não salvo para hoje
           expanded: false,
         };
       } else {
+        // Sem histórico - usar valores padrão do exercício
         newLogs[exercise.id] = {
           sets: Array.from({ length: plannedSets }, (_, i) => ({
             set: i + 1,
@@ -162,7 +193,29 @@ export function Workout() {
     });
 
     setExerciseLogs(newLogs);
-  }, [profile?.id, selectedDay, today]);
+  }, [profile?.id, selectedDay]);
+
+  // Manter ref de fetchAllData atualizada
+  useEffect(() => {
+    fetchAllDataRef.current = fetchAllData;
+  }, [fetchAllData]);
+
+  // Verificar mudança de dia a cada minuto (evita dados salvos com data errada após meia-noite)
+  useEffect(() => {
+    const checkDayChange = () => {
+      const newDate = getBrasiliaDate();
+      if (newDate !== currentDateRef.current) {
+        console.log('[Workout] Dia mudou:', currentDateRef.current, '->', newDate);
+        currentDateRef.current = newDate;
+        setCurrentDate(newDate);
+        // Refetch para carregar dados do novo dia
+        fetchAllDataRef.current?.();
+      }
+    };
+
+    const interval = setInterval(checkDayChange, 60000); // Verifica a cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   // Hook que gerencia loading e refetch automático
   const { isInitialLoading: loading } = usePageData({
@@ -178,6 +231,9 @@ export function Workout() {
       : [...completedExercises, exerciseId];
 
     setCompletedExercises(newCompleted);
+
+    // Usar ref para garantir data mais atual
+    const today = currentDateRef.current;
 
     const { data: existing } = await supabase
       .from('daily_progress')
@@ -283,7 +339,10 @@ export function Workout() {
     if (!isAutoSave) {
       setSavingExercise(exerciseId);
     }
-    const exerciseLog = exerciseLogs[exerciseId];
+    // Usar ref para evitar stale closure no auto-save
+    const exerciseLog = exerciseLogsRef.current[exerciseId];
+    // Usar ref para garantir data mais atual
+    const today = currentDateRef.current;
 
     try {
       const setsToSave = exerciseLog.sets.map(s => ({
@@ -301,18 +360,28 @@ export function Workout() {
         .maybeSingle();
 
       if (existing) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('exercise_logs')
           .update({ sets_completed: setsToSave })
           .eq('id', existing.id);
+
+        if (updateError) {
+          console.error('Erro ao atualizar log:', updateError);
+          throw updateError;
+        }
       } else {
-        await supabase.from('exercise_logs').insert({
+        const { error: insertError } = await supabase.from('exercise_logs').insert({
           client_id: profile!.id,
           exercise_id: exerciseId,
           daily_workout_id: exercise.daily_workout_id,
           date: today,
           sets_completed: setsToSave,
         });
+
+        if (insertError) {
+          console.error('Erro ao inserir log:', insertError);
+          throw insertError;
+        }
       }
 
       setExerciseLogs(prev => ({
@@ -368,7 +437,7 @@ export function Workout() {
     // Agendar novo auto-save em 2 segundos
     const timeout = setTimeout(() => {
       const exercise = exercises.find(e => e.id === exerciseId);
-      if (exercise && exerciseLogs[exerciseId] && !exerciseLogs[exerciseId].saved) {
+      if (exercise && exerciseLogsRef.current[exerciseId] && !exerciseLogsRef.current[exerciseId].saved) {
         saveExerciseLog(exerciseId, exercise, true);
       }
       autoSaveTimeouts.current.delete(exerciseId);
