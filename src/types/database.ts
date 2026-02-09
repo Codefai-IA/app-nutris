@@ -1,4 +1,73 @@
 export type UserRole = 'client' | 'admin';
+
+// ============================================
+// APP SETTINGS (WHITELABEL)
+// ============================================
+
+export interface AppSettings {
+  id: string;
+
+  // Identidade do App
+  app_name: string;
+  app_short_name: string;
+  app_description: string;
+
+  // Cores Primarias
+  color_primary: string;
+  color_primary_hover: string;
+  color_primary_light: string;
+
+  // Cores Secundarias
+  color_secondary: string;
+
+  // Cores de Destaque (Accent)
+  color_accent: string;
+  color_accent_hover: string;
+  color_accent_light: string;
+
+  // Cores de Texto
+  color_text_primary: string;
+  color_text_secondary: string;
+
+  // Cores de Fundo
+  color_bg_main: string;
+  color_bg_card: string;
+
+  // URLs dos Logos
+  logo_main_url: string | null;
+  logo_icon_url: string | null;
+  favicon_url: string | null;
+
+  // PWA
+  pwa_theme_color: string;
+  pwa_background_color: string;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_APP_SETTINGS: Omit<AppSettings, 'id' | 'created_at' | 'updated_at'> = {
+  app_name: 'Michael Cezar Nutricionista',
+  app_short_name: 'MC Nutri',
+  app_description: 'App de acompanhamento nutricional e treinos',
+  color_primary: '#1c4c9b',
+  color_primary_hover: '#153a75',
+  color_primary_light: 'rgba(28, 76, 155, 0.1)',
+  color_secondary: '#263066',
+  color_accent: '#f3985b',
+  color_accent_hover: '#e07d3a',
+  color_accent_light: 'rgba(243, 152, 91, 0.1)',
+  color_text_primary: '#080d15',
+  color_text_secondary: '#4a5568',
+  color_bg_main: '#f5f7fa',
+  color_bg_card: '#ffffff',
+  logo_main_url: null,
+  logo_icon_url: null,
+  favicon_url: null,
+  pwa_theme_color: '#1c4c9b',
+  pwa_background_color: '#f5f7fa',
+};
 export type HealthRating = 'excellent' | 'good' | 'regular' | 'poor';
 export type UnitType = 'gramas' | 'ml' | 'unidade' | 'fatia' | 'colher_sopa' | 'colher_cha' | 'xicara' | 'copo' | 'porcao';
 export type DigestionRating = 'good' | 'poor' | 'terrible';
@@ -266,6 +335,119 @@ export interface ExerciseLogRecord {
   created_at: string;
 }
 
+// ============================================
+// PAYMENT SYSTEM
+// ============================================
+
+export type PaymentGateway = 'none' | 'mercado_pago' | 'asaas' | 'pagseguro' | 'pagarme';
+export type PaymentMethod = 'pix' | 'boleto' | 'credit_card';
+export type PaymentStatus = 'pending' | 'approved' | 'rejected' | 'expired' | 'refunded';
+export type AsaasEnvironment = 'sandbox' | 'production';
+
+export interface PaymentSettings {
+  id: string;
+  owner_id: string;
+
+  // Active gateway selection
+  active_gateway: PaymentGateway;
+
+  // Mercado Pago credentials
+  mp_access_token: string | null;
+  mp_public_key: string | null;
+
+  // Asaas credentials
+  asaas_api_key: string | null;
+  asaas_environment: AsaasEnvironment;
+
+  // PagSeguro credentials
+  ps_email: string | null;
+  ps_token: string | null;
+
+  // Pagar.me credentials
+  pm_api_key: string | null;
+  pm_encryption_key: string | null;
+
+  // Payment methods enabled
+  pix_enabled: boolean;
+  boleto_enabled: boolean;
+  credit_card_enabled: boolean;
+
+  // Public checkout configuration
+  checkout_slug: string | null;
+  checkout_title: string;
+  checkout_description: string | null;
+  checkout_success_message: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  owner_id: string;
+  name: string;
+  description: string | null;
+  duration_days: number;
+  price_cents: number;
+  features: string[];
+  is_active: boolean;
+  is_featured: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Payment {
+  id: string;
+  owner_id: string;
+  client_id: string | null;
+  plan_id: string | null;
+
+  // Gateway info
+  gateway: PaymentGateway;
+  gateway_payment_id: string | null;
+
+  // Payment details
+  amount_cents: number;
+  payment_method: PaymentMethod | null;
+  status: PaymentStatus;
+
+  // Customer info
+  customer_email: string;
+  customer_name: string;
+  customer_phone: string | null;
+  customer_cpf: string | null;
+
+  // PIX specific
+  pix_qr_code: string | null;
+  pix_qr_code_base64: string | null;
+  pix_expiration: string | null;
+
+  // Boleto specific
+  boleto_url: string | null;
+  boleto_barcode: string | null;
+  boleto_expiration: string | null;
+
+  // Credit card specific
+  card_last_digits: string | null;
+  card_brand: string | null;
+  installments: number;
+
+  // Tracking
+  paid_at: string | null;
+  webhook_data: Record<string, unknown> | null;
+  error_message: string | null;
+
+  created_at: string;
+  updated_at: string;
+}
+
+// Payment with related data for display
+export interface PaymentWithPlan extends Payment {
+  plan?: SubscriptionPlan;
+  client?: Profile;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -353,6 +535,21 @@ export interface Database {
         Row: ExerciseLogRecord;
         Insert: Omit<ExerciseLogRecord, 'id' | 'created_at'>;
         Update: Partial<Omit<ExerciseLogRecord, 'id'>>;
+      };
+      payment_settings: {
+        Row: PaymentSettings;
+        Insert: Omit<PaymentSettings, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<PaymentSettings, 'id'>>;
+      };
+      subscription_plans: {
+        Row: SubscriptionPlan;
+        Insert: Omit<SubscriptionPlan, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<SubscriptionPlan, 'id'>>;
+      };
+      payments: {
+        Row: Payment;
+        Insert: Omit<Payment, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Payment, 'id'>>;
       };
     };
   };

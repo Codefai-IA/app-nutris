@@ -35,3 +35,14 @@
 .closeButton:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+.renewLink {
+  color: white;
+  font-weight: 700;
+  text-decoration: underline;
+  margin-left: 4px;
+}
+
+.renewLink:hover {
+  text-decoration: none;
+}

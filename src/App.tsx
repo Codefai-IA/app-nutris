@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { PlanExpiredScreen, PlanExpiringBanner, InstallPWA } from './components/ui';
 
 // Auth pages
@@ -24,6 +25,12 @@ import { DietManagement } from './pages/admin/DietManagement';
 import { WorkoutManagement } from './pages/admin/WorkoutManagement';
 import { LibraryManagement } from './pages/admin/LibraryManagement';
 import { GuidelinesManagement } from './pages/admin/GuidelinesManagement';
+import { WhitelabelSettings } from './pages/admin/WhitelabelSettings';
+import { PaymentSettings } from './pages/admin/PaymentSettings';
+import { FinancialDashboard } from './pages/admin/FinancialDashboard';
+
+// Public pages
+import { CheckoutPage } from './pages/public/CheckoutPage';
 
 // Helper function for Brasilia date
 function getBrasiliaDate(): string {
@@ -336,6 +343,33 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
+      <Route
+        path="/admin/personalizacao"
+        element={
+          <AdminRoute>
+            <WhitelabelSettings />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/pagamentos"
+        element={
+          <AdminRoute>
+            <PaymentSettings />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/financeiro"
+        element={
+          <AdminRoute>
+            <FinancialDashboard />
+          </AdminRoute>
+        }
+      />
+
+      {/* ========== ROTAS PUBLICAS ========== */}
+      <Route path="/checkout/:slug" element={<CheckoutPage />} />
 
       {/* Rota fallback - redireciona para raiz */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -347,9 +381,11 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

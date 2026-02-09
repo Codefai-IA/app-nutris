@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { Button, Input } from '../../components/ui';
 import styles from './Login.module.css';
@@ -9,6 +10,7 @@ import styles from './Login.module.css';
 export function Login() {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { settings } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,8 @@ export function Login() {
   const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const logoUrl = settings?.logo_icon_url || settings?.logo_main_url || '/logo-icon.png';
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -88,7 +92,7 @@ export function Login() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.logo}>
-          <img src="/logo-icon.png" alt="Logo" className={styles.logoText} />
+          <img src={logoUrl} alt="Logo" className={styles.logoText} />
         </div>
       </div>
 

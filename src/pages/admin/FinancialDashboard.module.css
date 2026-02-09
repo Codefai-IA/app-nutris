@@ -1,0 +1,344 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--bg-main);
+  border-radius: 10px;
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.backButton:hover {
+  background: var(--border-light);
+}
+
+.headerContent {
+  flex: 1;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+}
+
+.refreshButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: var(--bg-main);
+  border-radius: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.refreshButton:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Content */
+.content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.statCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px !important;
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-light);
+  border-radius: 10px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.statValue {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.approvedCount {
+  color: var(--success);
+}
+
+.pendingCount {
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Alert Card */
+.alertCard {
+  padding: 16px !important;
+  background: #fef3c7 !important;
+  border: 1px solid #fcd34d;
+}
+
+.alertHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.alertIcon {
+  color: #d97706;
+}
+
+.alertTitle {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.expiringList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expiringItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.expiringItem:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.expiringInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expiringName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expiringEmail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expiringDays {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #fed7aa;
+  color: #c2410c;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.expiringToday {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+/* Section */
+.section {
+  padding: 16px !important;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 20px 0;
+  margin: 0;
+}
+
+/* Payments List */
+.paymentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paymentItem {
+  padding: 12px;
+  background: var(--bg-main);
+  border-radius: 10px;
+}
+
+.paymentMain {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.paymentInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.paymentName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paymentMeta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.paymentRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.paymentAmount {
+  font-size: 0.938rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.paymentStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.688rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.statusApproved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.statusRejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.statusExpired {
+  background: var(--bg-main);
+  color: var(--text-muted);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: var(--text-muted);
+}

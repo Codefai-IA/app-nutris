@@ -1,0 +1,450 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background: var(--accent-hover);
+}
+
+.loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.emptyCard {
+  padding: 32px 20px !important;
+  text-align: center;
+}
+
+.emptyText {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Plans List */
+.plansList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.planCard {
+  padding: 16px !important;
+  transition: opacity 0.2s ease;
+}
+
+.planInactive {
+  opacity: 0.6;
+}
+
+.planHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.planGrip {
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 4px 0;
+}
+
+.planInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.planTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.planName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.featuredBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 0.688rem;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.inactiveBadge {
+  padding: 4px 8px;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  font-size: 0.688rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.planMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.planPrice {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.planDuration {
+  font-size: 0.813rem;
+  color: var(--text-muted);
+}
+
+.planDescription {
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+.planFeatures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planFeatures li {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 6px;
+}
+
+.moreFeatures {
+  background: var(--bg-main) !important;
+  color: var(--text-muted) !important;
+}
+
+.planActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--bg-main);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
+.actionBtn.featured {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.actionBtn.deleteBtn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.modalHeader h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--bg-main);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
+.form {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transition: border-color 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Feature Input */
+.featureInput {
+  display: flex;
+  gap: 8px;
+}
+
+.featureInput input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.featureInput input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.addFeatureBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addFeatureBtn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+.featuresList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.featuresList li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-main);
+  border-radius: 8px;
+  font-size: 0.813rem;
+  color: var(--text-primary);
+}
+
+.featuresList li button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.featuresList li button:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Toggles */
+.togglesRow {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Form Actions */
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.938rem;
+  font-weight: 600;
+  background: var(--bg-main);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: var(--border-light);
+}
+
+.formActions button[type="submit"] {
+  flex: 1;
+}

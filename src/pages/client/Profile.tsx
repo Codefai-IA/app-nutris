@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Scale, Ruler, Target, Calendar, Edit3, Check, X, TrendingDown, TrendingUp, Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { PageContainer, Header, BottomNav } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
@@ -21,6 +22,7 @@ function getBrasiliaDate(): string {
 export function Profile() {
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile } = useAuth();
+  const { settings } = useTheme();
   const [weightHistory, setWeightHistory] = useState<WeightHistory[]>([]);
   const [loggingOut, setLoggingOut] = useState(false);
   const [isEditingWeight, setIsEditingWeight] = useState(false);
@@ -29,6 +31,8 @@ export function Profile() {
   const [weightSaved, setWeightSaved] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const logoUrl = settings?.logo_icon_url || settings?.logo_main_url || '/logo-icon.png';
 
   useEffect(() => {
     if (profile?.id) {
@@ -227,7 +231,7 @@ export function Profile() {
     <PageContainer>
       <header className={styles.header}>
         <img
-          src="/logo-icon.png"
+          src={logoUrl}
           alt="Logo"
           className={styles.logo}
         />

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Dumbbell, Utensils, ChevronRight, Flame } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
 import { usePageData } from '../../hooks';
 import { PageContainer, BottomNav } from '../../components/layout';
@@ -21,8 +22,11 @@ function getBrasiliaDate(): string {
 
 export function Home() {
   const { profile } = useAuth();
+  const { settings } = useTheme();
   const [progress, setProgress] = useState<DailyProgress | null>(null);
   const [weeklyStats, setWeeklyStats] = useState({ workouts: 0, meals: 0, totalWorkouts: 7, totalMeals: 7 });
+
+  const logoUrl = settings?.logo_icon_url || settings?.logo_main_url || '/logo-icon.png';
 
   const fetchAllData = useCallback(async () => {
     if (!profile?.id) return;
@@ -78,7 +82,7 @@ export function Home() {
           <p className={styles.subtitle}>Vamos treinar hoje?</p>
         </div>
         <img
-          src="/logo-icon.png"
+          src={logoUrl}
           alt="App Logo"
           className={styles.logo}
         />

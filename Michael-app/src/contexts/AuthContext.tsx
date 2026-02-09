@@ -53,7 +53,9 @@ function clearCachedRole(): void {
   try {
     localStorage.removeItem(ROLE_CACHE_KEY);
     localStorage.removeItem(USER_ID_CACHE_KEY);
+    // Clear auth tokens for both old and new projects
     localStorage.removeItem('sb-nibzlpxnwzufowssyaso-auth-token');
+    localStorage.removeItem('sb-ixqrdmitrbxcbvaejagj-auth-token');
   } catch {
     // Ignorar erro de localStorage
   }

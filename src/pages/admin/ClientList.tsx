@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, Plus, LogOut, Utensils, Dumbbell, BookOpen } from 'lucide-react';
+import { Search, ChevronRight, Plus, LogOut, Utensils, Dumbbell, BookOpen, Settings, CreditCard, DollarSign } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { PageContainer } from '../../components/layout';
@@ -128,6 +128,27 @@ export function ClientList() {
             title="Biblioteca"
           >
             <BookOpen size={20} />
+          </button>
+          <button
+            className={styles.libraryButton}
+            onClick={() => navigate('/admin/pagamentos')}
+            title="Pagamentos"
+          >
+            <CreditCard size={20} />
+          </button>
+          <button
+            className={styles.libraryButton}
+            onClick={() => navigate('/admin/financeiro')}
+            title="Financeiro"
+          >
+            <DollarSign size={20} />
+          </button>
+          <button
+            className={styles.libraryButton}
+            onClick={() => navigate('/admin/personalizacao')}
+            title="Personalizacao"
+          >
+            <Settings size={20} />
           </button>
           <button
             className={styles.logoutButton}

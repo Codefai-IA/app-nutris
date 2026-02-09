@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../contexts/ThemeContext';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -19,6 +20,9 @@ export function Header({
   children,
 }: HeaderProps) {
   const navigate = useNavigate();
+  const { settings } = useTheme();
+
+  const logoUrl = settings?.logo_icon_url || settings?.logo_main_url || '/logo-icon.png';
 
   return (
     <header className={styles.header}>
@@ -37,7 +41,7 @@ export function Header({
         <div className={styles.right}>
           {rightAction}
           <img
-            src="/logo-icon.png"
+            src={logoUrl}
             alt="Logo"
             className={styles.logo}
           />

@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Utensils, Dumbbell, TrendingUp } from 'lucide-react';
+import { Utensils, Dumbbell, TrendingUp, CreditCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import styles from './PlanExpiredScreen.module.css';
 
 // Retorna a data atual no fuso horário de Brasília
@@ -69,6 +71,29 @@ function getProgressMessage(
 export function PlanExpiredScreen({ planEndDate, nutritionistWhatsapp, startingWeight, currentWeight, goalWeight }: PlanExpiredScreenProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [checkoutSlug, setCheckoutSlug] = useState<string | null>(null);
+
+  // Try to find checkout link
+  useEffect(() => {
+    async function findCheckoutLink() {
+      try {
+        const { data } = await supabase
+          .from('payment_settings')
+          .select('checkout_slug')
+          .neq('active_gateway', 'none')
+          .not('checkout_slug', 'is', null)
+          .limit(1)
+          .maybeSingle();
+
+        if (data?.checkout_slug) {
+          setCheckoutSlug(data.checkout_slug);
+        }
+      } catch (err) {
+        console.error('Error finding checkout:', err);
+      }
+    }
+    findCheckoutLink();
+  }, []);
 
   const daysSinceExpired = Math.abs(
     Math.ceil(
@@ -150,14 +175,24 @@ export function PlanExpiredScreen({ planEndDate, nutritionistWhatsapp, startingW
           </div>
         </div>
 
-        {/* CTA Button */}
+        {/* CTA Buttons */}
+        {checkoutSlug && (
+          <a
+            href={`/checkout/${checkoutSlug}`}
+            className={styles.renewOnlineButton}
+          >
+            <CreditCard size={18} />
+            Renovar Online
+          </a>
+        )}
+
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={styles.whatsappButton}
+          className={checkoutSlug ? styles.whatsappButtonSecondary : styles.whatsappButton}
         >
-          Renovar Agora
+          {checkoutSlug ? 'Falar no WhatsApp' : 'Renovar Agora'}
         </a>
 
         {/* Secondary Text */}

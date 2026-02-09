@@ -193,3 +193,54 @@
 .logoutButton:hover {
   color: rgba(255, 255, 255, 0.6);
 }
+
+/* Renew Online Button - Primary */
+.renewOnlineButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  margin-bottom: 12px;
+}
+
+.renewOnlineButton:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.renewOnlineButton:active {
+  transform: scale(0.98);
+}
+
+/* Secondary WhatsApp Button */
+.whatsappButtonSecondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.whatsappButtonSecondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
